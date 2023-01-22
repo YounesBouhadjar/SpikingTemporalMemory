@@ -1,0 +1,30 @@
+name: spiking-htm
+channels:
+  #- conda-forge  
+  - defaults
+dependencies:
+  - python==3.8  
+  - pip  
+  - matplotlib
+  - numpy
+  - joblib
+  - pyyaml
+  - tqdm  
+  - scipy                         # required only for the generating the figure motif probability 
+  - ffmpeg                        # required for generating the video
+  
+  # required packages for the NEST installation
+  #- gcc_linux-64
+  #- gxx_linux-64
+  - cmake>=3.12
+  - cython>=0.28.3
+  - libtool
+  - gsl 
+  - readline 
+
+  # additional required packages installed via pip  
+  - pip:  
+    - parameters
+    - -e .        # installs the shtm package 
+    - snakemake   # this is only used for automatizing the generation of the figures,
+    - odetoolbox==2.3
