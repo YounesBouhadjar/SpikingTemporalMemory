@@ -85,6 +85,7 @@ p['syn_dict_ee']['Pmin'] = 1.                        # Minimum allowed permanenc
 p['syn_dict_ee']['lambda_minus'] = 0.0015            # depression rate
 p['syn_dict_ee']['dt_min'] = -4.                     # minimum time lag of the STDP window
 p['inh_factor'] = 7.
+p['p_target'] = para.ParameterRange([600.,700.,800.])
 
 # parameters of EX synapses (external to soma of E neurons)
 p['conn_dict_ex'] = {}
@@ -125,7 +126,7 @@ p['DeltaT_cue'] = 80.                 # inter-cue interval during replay
 p['dt'] = 0.1                                  # simulation time resolution (ms)
 p['overwrite_files'] = True                    # if True, data will be overwritten,
                                                # if False, a NESTError is raised if the files already exist
-p['seed'] = para.ParameterRange([1,2,3,4,5])   # seed for NEST
+p['seed'] = para.ParameterRange([1])           # seed for NEST
 p['print_simulation_progress'] = False         # print the time progress.
 p['n_threads'] = 4                             # number of threads per MPI process 
 p['pad_time'] = 5.
@@ -157,5 +158,5 @@ if p['task']['task_name'] != 'hard_coded':
     p['task']['replace'] = False               # random choice of characters with replacement
 
 # setup the training loop  
-p['learning_episodes'] = 85                     # total number of training episodes ('repetitions of the sequence sets')
-p['episodes_to_testing'] = 1                   # number of episodes after which we measure the prediction perfomance
+p['learning_episodes'] = 200                     # total number of training episodes ('repetitions of the sequence sets')
+p['episodes_to_testing'] = 10                   # number of episodes after which we measure the prediction perfomance

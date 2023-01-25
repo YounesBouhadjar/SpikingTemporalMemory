@@ -127,6 +127,7 @@ class Model:
             'data_path': str(self.data_path),
             'data_prefix': ''
         })
+        nest.set_verbosity("M_ERROR")
 
     def create(self):
         """Create and configure all network nodes (neurons + recording and stimulus devices)
@@ -208,7 +209,58 @@ class Model:
         if nest.Rank() == 0:
             print('\nSimulating {} ms.'.format(self.sim_time))
 
-        nest.Simulate(self.sim_time)
+        evr = self.params['soma_params']['tau_h']
+        t = 0.
+        while t < (self.sim_time+evr):
+            self.__normalize_incoming_weights()
+            nest.Simulate(evr)
+            t += evr
+    
+        #nest.Simulate(self.sim_time)
+
+        # record somatic spikes
+        times = nest.GetStatus(self.spike_recorder_soma)[0]['events']['times']
+        senders = nest.GetStatus(self.spike_recorder_soma)[0]['events']['senders']
+
+        data = np.array([senders, times]).T
+        fname = 'somatic_spikes'
+        print("save data to %s/%s ..." % (self.data_path, fname))
+        np.save('%s/%s' % (self.data_path, fname), data)
+
+        #x = helper.load_numpy_spike_data(self.data_path, fname)
+
+        # record dendritic currents
+        times = []
+        senders = []
+        I_dends = []
+        for i in range(self.num_sequences):
+            sender = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['senders']
+            time = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['times']
+            I_dend = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['I_dend']
+
+            senders.append(sender)
+            times.append(time)
+            I_dends.append(I_dend)
+
+        senders = np.concatenate(senders)
+        times = np.concatenate(times)
+        I_dends = np.concatenate(I_dends)
+        data = np.array([senders, times, I_dends]).T
+                
+        fname = 'idend_eval'
+        print("save data to %s/%s ..." % (self.data_path, fname))
+        np.save('%s/%s' % (self.data_path, fname), data)
+
+        #x = helper.load_numpy_spike_data(self.data_path, fname)
+
+        #import matplotlib.pyplot as plt
+        #plt.figure()
+        #plt.plot(time[-500:], sender[-500:], 'o', color='red', lw=0., ms=1.)
+
+        #plt.xlabel('time (ms)')
+        #plt.ylabel('sender')
+
+        #plt.savefig('spiking_activity.pdf')
 
     def __create_neuronal_populations(self):
         """'Create neuronal populations
@@ -266,8 +318,9 @@ class Model:
         """
 
         # create a spike recorder for exc neurons
-        self.spike_recorder_soma = nest.Create('spike_recorder', params={'record_to': 'ascii',
-                                                                         'label': 'somatic_spikes'})
+        #self.spike_recorder_soma = nest.Create('spike_recorder', params={'record_to': 'ascii',
+        #                                                                 'label': 'somatic_spikes'})
+        self.spike_recorder_soma = nest.Create('spike_recorder')
 
         # create a spike recorder for inh neurons
         self.spike_recorder_inh = nest.Create('spike_recorder', params={'record_to': 'ascii',
@@ -275,11 +328,14 @@ class Model:
 
         # create multimeter to record dendritic currents of exc_neurons at the time of the last element in the sequence
         if self.params['evaluate_performance']:
-            self.multimeter_idend_eval = nest.Create('multimeter', self.num_sequences,
-                                                     params={'record_from': ['I_dend'],
-                                                             'record_to': 'ascii',
-                                                             'label': 'idend_eval'})
+            #self.multimeter_idend_eval = nest.Create('multimeter', self.num_sequences,
+            #                                         params={'record_from': ['I_dend'],
+            #                                                 'record_to': 'ascii',
+            #                                                 'label': 'idend_eval'})
 
+            self.multimeter_idend_eval = nest.Create('multimeter', self.num_sequences,
+                                                     params={'record_from': ['I_dend']}
+                                                     )
             for i in range(self.num_sequences):
                 idend_eval_spec_dict = {'offset': idend_recording_times[i][0] + self.params['idend_record_time'],
                                         'interval': idend_recording_times[i][1] - idend_recording_times[i][0]}
@@ -630,6 +686,26 @@ class Model:
         print("\nDuration of a sequence set %d ms" % t_exc)
 
         return target_firing_rate * t_exc
+
+
+    def __normalize_incoming_weights(self, p_target=300.): 
+        """Normalizes weights of incoming synapses
+        """
+ 
+        for neuron in self.exc_neurons:
+
+            #connection = nest.GetConnections(target=neuron, synapse_model='stdsp_synapse')
+            #per = nest.GetStatus(connection, 'permanence')
+            #if np.sum(per) == 0:
+            #    raise ZeroDivisionError('sum of weights is zero!!')
+        
+            #nest.SetStatus(connection, 'permanence', Pt*np.array(per/np.sum(per)))
+
+            conn = nest.GetConnections(target=neuron, synapse_model='stdsp_synapse')
+            per = np.array(conn.permanence)
+            p_normed = per / sum(abs(per))  # L1-norm
+            #conn.permanence = p_target * p_normed
+            nest.SetStatus(conn, 'permanence', self.params['p_target'] * p_normed)
 
 
 ##############################################

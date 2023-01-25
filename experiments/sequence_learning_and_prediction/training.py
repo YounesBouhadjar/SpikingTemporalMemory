@@ -124,8 +124,8 @@ def generate_reference_data():
         #print(zs[id_zs])
 
         # load spikes from reference data
-        somatic_spikes = helper.load_spike_data(data_path, 'somatic_spikes')
-        idend_eval = helper.load_spike_data(data_path, 'idend_eval')
+        somatic_spikes = helper.load_numpy_spike_data(data_path, 'somatic_spikes')
+        idend_eval = helper.load_numpy_spike_data(data_path, 'idend_eval')
         excitation_times = helper.load_data(data_path, 'excitation_times')
 
         # get recoding times of dendriticAP
@@ -162,7 +162,6 @@ def generate_reference_data():
     print("lambda plus: %0.4f" % params['syn_dict_ee']['lambda_plus'])
     print("lambda homeostasis: %0.4f" % params['syn_dict_ee']['lambda_h'])
     print("lambda minus: %0.4f" % model_instance.params['syn_dict_ee']['lambda_minus']) 
-    print("inh factor:", params['inh_factor'])
     print("excitation step %0.1fms" % params['DeltaT']) #30-50  
     print("seed number: %d" % params['seed']) 
     print("number of learning episodes: %d" % params['learning_episodes'])
