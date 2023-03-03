@@ -98,7 +98,7 @@ def measure_patterns_uniqueness(pattern_size, population_size, connection_probab
                 conn[pattern_2] += delta
             
             conn[x] = 0
-            conn[conn[0]>P_max] = P_max 
+            conn[conn>P_max] = P_max 
             
             # apply synaptic normalization
             #TODO
