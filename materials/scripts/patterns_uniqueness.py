@@ -35,6 +35,13 @@ def plastic_change(facilitate_factor, delta_t, tau_plus, W_max, hs=0.3, depressi
     return weight_increment - constant_depression 
 
 
+def plot_weights(x):
+
+    plt.plot(np.array(x).T)
+
+    plt.savefig("weights.pdf")
+
+
 def measure_patterns_uniqueness(pattern_size, population_size, connection_probability, 
                                 spike_threshold, delta_perm_increase, scale_initial_perm, P_max, p_th):
     """
@@ -63,21 +70,22 @@ def measure_patterns_uniqueness(pattern_size, population_size, connection_probab
 
     """
 
-    training_steps = 100
+    training_steps = 200
     num_subpopulations = 2 
     sparsity = []
     steps = []
     conn_skelton = np.random.choice([1, 0], size=(population_size, population_size), p=[connection_probability, 1-connection_probability])
     permanences = scale_initial_perm * np.random.rand(population_size, population_size)
     initial_conn = conn_skelton * permanences 
-    normalize = False
+    normalize = True
 
     # TODO: this is only a first test
     # we could generalize this to N patterns
     # with a controllable amount of overlap
     pattern_1 = np.arange(0, pattern_size) 
-    pattern_2 = np.arange(pattern_size, 2*pattern_size)
-
+    pattern_2 = np.arange(2*pattern_size, 3*pattern_size)
+    pt = 2.
+    leakage = 0.1
 
     overlaps = []
 
@@ -85,26 +93,54 @@ def measure_patterns_uniqueness(pattern_size, population_size, connection_probab
         conn = copy.copy(initial_conn)
         continue_1 = True
         continue_2 = True
+        entered = True
+        conns_flatten = []
         for i in range(training_steps):
             
             # find potential connectivity
-            x = np.where(conn == 0)
+            x = np.where(initial_conn == 0)
 
             # synaptic facilitation
             if continue_1:
-                conn[pattern_1] += delta
+                conn[pattern_1, :] += delta
+            else:
+                conn[np.ix_(pattern_1, active_neurons_1)] += delta
 
             if continue_2:
-                conn[pattern_2] += delta
+                conn[pattern_2, :] += delta
+            else:
+                conn[np.ix_(pattern_2, active_neurons_2)] += delta
             
+            # leakage
+            conn -= leakage 
+
+            # set upper and lower limits
             conn[x] = 0
             conn[conn>P_max] = P_max 
-            
+            conn[conn<0] = 0 
+    
             # apply synaptic normalization
-            #TODO
-
-            # find connected synapses
             conn_connected = conn>p_th
+            if normalize:
+
+                # find connected synapses
+                y = np.sum(conn_connected, axis=0)#[np.newaxis, :]
+                conn = conn / (pt*y + 1.)
+
+            # set upper and lower limits
+            conn[conn>P_max] = P_max 
+            conn[conn<0] = 0 
+            conn[x] = 0
+
+            #plt.figure()
+            #plt.imshow(conn_connected, vmin=0, vmax=P_max)
+            #plt.imshow(conn_connected, vmin=0, vmax=1)
+            #plt.colorbar()
+            #plt.show()
+
+            #conn_flatten = np.array(conn[pattern_1, :].flatten())
+            #a = np.where(conn_flatten > 0)
+            #conns_flatten.append(conn_flatten[a]) 
 
             conn_connected_1 = conn_connected[pattern_1]
             conn_connected_2 = conn_connected[pattern_2]
@@ -122,10 +158,19 @@ def measure_patterns_uniqueness(pattern_size, population_size, connection_probab
                 continue_2 = False
         
             overlap = len(np.where((active_neurons_1 == True) & (active_neurons_2 == True))[0])
-            if not(continue_1) and not(continue_2):
-                break
-        
-        steps.append(i)
+            if not(continue_1) and not(continue_2) and entered:
+                steps.append(i)
+                entered = False
+
+        if entered:
+            steps.append(i)
+
+        #plt.figure()
+        #plt.imshow(conn_connected, vmin=0, vmax=P_max)
+        #plt.imshow(conn_connected, vmin=0, vmax=1)
+        #plt.colorbar()
+        #plt.show()
+
         overlaps.append(overlap)
  
     return overlaps, steps
@@ -153,26 +198,26 @@ def measure_patterns_uniqueness_trials(pattern_size, population_size, connection
         number of active neurons per population after convergence 
     """
 
-    trials = 20
+    trials = 10
+    all_overlaps = []
     all_steps = []
-    all_sparsity = []
     for i in tqdm(range(trials)):
-        steps, sparsity = sparsity_measure(pattern_size, population_size, connection_probability, spike_threshold, delta_perm_increase, scale_initial_perm, W_max, p_th)
+        overlaps, steps = measure_patterns_uniqueness(pattern_size, population_size, connection_probability, spike_threshold, delta_perm_increase, scale_initial_perm, W_max, p_th)
 
+        all_overlaps.append(overlaps)
         all_steps.append(steps)
-        all_sparsity.append(sparsity)
     
     mean_steps = np.mean(all_steps, 0)
-    mean_sparsity = np.mean(all_sparsity, 0)
+    mean_overlaps = np.mean(all_overlaps, 0)
 
-    return mean_steps, mean_sparsity 
+    return mean_overlaps, mean_steps
 
 # set parameters 
 population_size = 150         # number of neurons per subpopulation      
 pattern_size = 20             # pattern size
-connection_probability = 0.3  # connection probability
+connection_probability = 0.5  # connection probability
 prediction_threshold = 5      # correspond to params["soma_params"]["theta_dAP"] / params["syn_dict_ee"]['Wmax'] 
-max_initial_perm = 8.
+max_initial_perm = 1.
 
 facilitate_factor = np.arange(0.01,0.11,0.01)
 tau_plus = 20.
@@ -184,7 +229,7 @@ def example1():
 
     delta_perm_increase = plastic_change(facilitate_factor, delta_t, tau_plus, P_max)
 
-    overlaps, steps = measure_patterns_uniqueness(pattern_size, population_size, 
+    overlaps, steps = measure_patterns_uniqueness_trials(pattern_size, population_size, 
                                                   connection_probability, prediction_threshold, 
                                                   delta_perm_increase, max_initial_perm, P_max, th_perm)
 
@@ -194,13 +239,13 @@ def example1():
 
     ax1.plot(facilitate_factor, overlaps,'-',lw=2, color='0.0')
     ax1.set_ylabel('pattern overlap')
-    ax1.set_ylim(0, max(overlaps)+1.)
+    ax1.set_ylim(-0.01, max(overlaps)+1.)
     ax1.hlines(y=pattern_size, xmin=facilitate_factor[0], xmax=facilitate_factor[-1], linestyles='dotted', lw=1)
 
     ax2 = ax1.twinx()
     ax2.plot(facilitate_factor, steps,'-',lw=2, color='0.7') 
     ax2.set_ylabel('steps to convergence', color='0.7')
-    ax2.set_ylim(0, max(steps)+1.)
+    ax2.set_ylim(-0.01, max(steps)+1.)
     ax2.tick_params(axis='y', labelcolor='0.6')
 
     ax1.set_xlim(facilitate_factor[0], facilitate_factor[-1])
