@@ -51,16 +51,12 @@ def create_parser():
     parser_.add_argument("--exp-params-idx", dest="exp_params_idx", type=int, default=0)
     parser_.add_argument("--batch-id", dest="batch_idx", type=int, default=0)
     parser_.add_argument("--jobmax", dest="jobmax", type=int, default=0)
-    parser_.add_argument("--wb", dest="run_wb", type=bool, default=False)
+    parser_.add_argument("--hwb", dest="run_hwb", type=bool, default=False, help="enabled if hyperparameter search is executed")
     parser_.add_argument("--wbm", dest="wb_mode", type=str, default="offline")
     return parser_
 
 
 def generate_reference_data():
-
-    # args
-    #cmdl_parse = copy.copy(sys.argv)
-    #args = create_parser().parse_args(cmdl_parse[1:])
 
     parser = create_parser()
     args, unparsed = parser.parse_known_args()
@@ -76,17 +72,6 @@ def generate_reference_data():
     #PS = model.get_parameters()
     PS = __import__(args.exp_params.split(".")[0]).p
 
-    if args.run_wb:
-        wandb.init(mode=args.wb_mode,
-                   project=PS['data_path']['project_name'],
-                   config=wandb.config
-                  )
-
-        PS['syn_dict_ee']['lambda_h'] = wandb.config['lambda_h']
-        PS['syn_dict_ee']['lambda_minus'] =  wandb.config['lambda_minus']
-        PS['syn_dict_ee']['zt'] = wandb.config['zt']
-
-
     # parameter-set id from command line (submission script)
     PL = helper.parameter_set_list(PS) 
 
@@ -97,7 +82,20 @@ def generate_reference_data():
 
     params = PL[array_id]
 
-    if not(args.run_wb):
+    if args.run_hwb:
+        wandb.init(mode=args.wb_mode,
+                   project=PS['data_path']['project_name'],
+                   config=wandb.config
+                  )
+
+        # TODO: alternatively these could be added to args (see above)
+        #params['syn_dict_ee']['lambda_h'] = wandb.config['lambda_h']
+        #params['syn_dict_ee']['lambda_minus'] =  wandb.config['lambda_minus']
+        params['p_target'] =  wandb.config['w_dep']
+        params['n_E'] =  wandb.config['n_E']
+        #params['syn_dict_ee']['zt'] = wandb.config['zt']
+
+    else:
         wandb.init(mode=args.wb_mode,
                    project=params['data_path']['project_name'],
                    name = params['label'],
@@ -252,7 +250,7 @@ def generate_reference_data():
 
         print("False negative counts", count_false_negatives)   
 
-        wandb.log({"loss": seq_avg_errors[-1], "fn": count_false_negatives})
+        wandb.log({"loss": seq_avg_errors[-1], "fp": seq_avg_false_positives[-1], "fn": seq_avg_false_negatives[-1]})
 
 
     wandb.finish()
