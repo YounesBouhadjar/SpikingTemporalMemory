@@ -85,7 +85,7 @@ def generate_reference_data():
     if args.run_hwb:
         wandb.init(mode=args.wb_mode,
                    project=PS['data_path']['project_name'],
-                   config=wandb.config
+                   config=wandb.config #TODO: find a way to log params as well
                   )
 
         # TODO: alternatively these could be added to args (see above)
