@@ -31,7 +31,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from collections import defaultdict
 
-from shtm import helper
+sys.path.append('./../../shtm')
+import helper
  
 path_dict = {} 
 path_dict['data_root_path'] = 'data'
@@ -66,8 +67,8 @@ for cP, params in enumerate(PL):
     print("\t\t data set %d/%d: %s/%s" % (cP + 1, len(PL), data_path, fname))
 
     # load somatic spikes and dendritic current
-    somatic_spikes = helper.load_spike_data(data_path, 'somatic_spikes')
-    idend_eval = helper.load_spike_data(data_path, 'idend_eval')
+    somatic_spikes = helper.load_numpy_spike_data(data_path, 'somatic_spikes')
+    idend_eval = helper.load_numpy_spike_data(data_path, 'idend_eval')
 
     # load record and excitation times 
     idend_recording_times = helper.load_data(data_path, 'idend_recording_times')

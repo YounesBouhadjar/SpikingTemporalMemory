@@ -1,24 +1,39 @@
 # make the functions available
-import sys
+from pynestml.frontend.pynestml_frontend import generate_nest_target
+import re
+import nest
 from pathlib import Path
 
-from pynestml.frontend.pynestml_frontend import to_nest, install_nest
+nestml_neuron_model = 'iaf_psc_exp_nonlineardendrite'
+nestml_synapse_model = 'stdsp_homeostasis_synapse'
 
-options = {
-    "neuron_parent_class_include": "archiving_node_ext.h",
-    "neuron_parent_class": "ArchivingNodeExt",
-}
+nest_build_dir = str(Path(nest.__path__[0]).parent.parent.parent.parent)
+input_path = 'nestml_models/'
 
-# generate the C++ code:
-to_nest(input_path="nestml_models", target_path="module", module_name="nestml_active_dend_module", logging_level="INFO", codegen_opts=options)
-#to_nest(input_path="nestml_models", target_path="module", module_name="nestml_active_dend_module", logging_level="INFO")
+# compile nestml neuron model
+generate_nest_target(input_path=input_path + nestml_neuron_model + ".nestml",
+                     target_path="module",
+                     logging_level="ERROR",
+                     module_name="nestml_"+ nestml_neuron_model + "_module",
+                     codegen_opts={"nest_path":  nest_build_dir})
 
-if len(sys.argv) > 1:
-    nest_build_dir = sys.argv[1]
-else:
-    import nest
-    nest_build_dir = str(Path(nest.__path__[0]).parent.parent.parent.parent)
-    print("Using {} as the NEST build directory path".format(nest_build_dir))
+nest.Install("nestml_"+ nestml_neuron_model + "_module")
 
-# compile and install the C++ code:
-install_nest("module", nest_build_dir)
+
+def compile(nestml_neuron_model_name, nestml_synapse_model_name):
+
+  # generate the code for neuron and synapse (co-generated)
+  generate_nest_target(input_path=[input_path + nestml_neuron_model + ".nestml",
+                                   input_path + nestml_synapse_model + ".nestml"],
+                       target_path="module",
+                       logging_level="ERROR",
+                       module_name="nestml_" + nestml_neuron_model + "_" + nestml_synapse_model + "_module",
+                       suffix="_nestml",
+                       codegen_opts={"nest_path": nest_build_dir,
+                                     #"neuron_parent_class": "StructuralPlasticityNode",
+                                     #"neuron_parent_class_include": "structural_plasticity_node.h",
+                                     "neuron_synapse_pairs": [{"neuron": nestml_neuron_model_name,
+                                                                 "synapse": nestml_synapse_model_name,
+                                                                 "post_ports": ["post_spikes", ["z_post", "z"]]}]})
+                                                                 
+compile(nestml_neuron_model, nestml_synapse_model)

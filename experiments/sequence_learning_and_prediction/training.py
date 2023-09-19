@@ -29,14 +29,16 @@ import sys
 import time
 import numpy as np
 
-from shtm import model, helper
+sys.path.append('./../../shtm')
+import model, helper
 
 def generate_reference_data():
 
     # ###########################################################
     # import nestml module
     # ===========================================================
-    nest.Install('../../module/nestml_active_dend_module')
+    nest.Install('../../module/nestml_iaf_psc_exp_nonlineardendrite_module')
+    nest.Install('../../module/nestml_iaf_psc_exp_nonlineardendrite_stdsp_homeostasis_synapse_module')
 
     #############################################################
     # get network and training parameters 
@@ -56,6 +58,10 @@ def generate_reference_data():
         array_id = 0
 
     params = PL[array_id]
+
+    neuron_model = params['soma_model']
+    params['soma_model'] = neuron_model + '_nestml_' + '_with_' + params['syn_dict_ee']['synapse_model'] + '_nestml'
+    params['syn_dict_ee']['synapse_model'] = params['syn_dict_ee']['synapse_model'] + '_nestml_' + '_with_' + neuron_model + '_nestml'
 
     # start time 
     time_start = time.time()
@@ -159,8 +165,7 @@ def generate_reference_data():
         print("False negative counts", count_false_negatives)   
 
     print("\n### Plasticity parameters")
-    print("lambda plus: %0.4f" % params['syn_dict_ee']['lambda_plus'])
-    print("lambda homeostasis: %0.4f" % params['syn_dict_ee']['lambda_h'])
+    print("lambda: %0.4f" % params['syn_dict_ee']['lambda'])
     print("lambda minus: %0.4f" % model_instance.params['syn_dict_ee']['lambda_minus']) 
     print("excitation step %0.1fms" % params['DeltaT']) #30-50  
     print("seed number: %d" % params['seed']) 
