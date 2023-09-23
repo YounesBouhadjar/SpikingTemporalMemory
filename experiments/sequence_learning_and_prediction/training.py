@@ -91,6 +91,7 @@ def generate_reference_data():
         # TODO: alternatively these could be added to args (see above)
         #params['syn_dict_ee']['lambda_h'] = wandb.config['lambda_h']
         #params['syn_dict_ee']['lambda_minus'] =  wandb.config['lambda_minus']
+        params['syn_dict_ee']['lambda_plus'] =  wandb.config['lambda_plus']
         params['p_target'] =  wandb.config['w_dep']
         params['n_E'] =  wandb.config['n_E']
         #params['syn_dict_ee']['zt'] = wandb.config['zt']
