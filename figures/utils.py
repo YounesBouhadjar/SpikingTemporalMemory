@@ -167,22 +167,24 @@ def plot_spikes(somatic_spikes, inh_spikes, dendritic_current, start_time, end_t
 
     plt.figure(constrained_layout=True)
 
-    ind = np.where((dendritic_current[:, 2] > dAP_threshold))[0]
-    dendriticAP_times = dendritic_current[:, 1][ind]
-    dendriticAP_currents = dendritic_current[:, 0][ind]
-
     # select data to show
-    idx_somatic = np.where((somatic_spikes[:, 1] > start_time) & (somatic_spikes[:, 1] < end_time))
     if len(inh_spikes[0]) != 0:
         idx_inh = np.where((inh_spikes[:, 1] > start_time) & (inh_spikes[:, 1] < end_time))
-    idx_dAP = np.where((dendriticAP_times > start_time) & (dendriticAP_times < end_time))
-
-    plt.plot(somatic_spikes[:, 1][idx_somatic], somatic_spikes[:, 0][idx_somatic], 'o', color='red', lw=0., ms=1., zorder=2,
-             label='somatic_spikes')
-    if len(inh_spikes[0]) != 0:
         plt.plot(inh_spikes[:, 1][idx_inh], inh_spikes[:, 0][idx_inh], 'o', color='green', lw=0., ms=1.)
-    plt.plot(dendriticAP_times[idx_dAP], dendriticAP_currents[idx_dAP], 'o', color='#00B4BE', lw=0., ms=0.5, zorder=1,
-             label='dendriticAP')
+   
+    if len(somatic_spikes[0]) != 0:
+        idx_somatic = np.where((somatic_spikes[:, 1] > start_time) & (somatic_spikes[:, 1] < end_time))
+        plt.plot(somatic_spikes[:, 1][idx_somatic], somatic_spikes[:, 0][idx_somatic], 'o', color='red', lw=0., ms=1., zorder=2,
+                label='somatic_spikes')
+
+    if len(dendritic_current[0]) != 0:    
+        ind = np.where((dendritic_current[:, 2] > dAP_threshold))[0]
+        dendriticAP_times = dendritic_current[:, 1][ind]
+        dendriticAP_currents = dendritic_current[:, 0][ind]
+        idx_dAP = np.where((dendriticAP_times > start_time) & (dendriticAP_times < end_time))
+        plt.plot(dendriticAP_times[idx_dAP], dendriticAP_currents[idx_dAP], 'o', color='#00B4BE', lw=0., ms=0.5, zorder=1,
+                label='dendriticAP')
+
     plt.xlabel('time (ms)')
 
     legend_elements = [Line2D([0], [0], marker='o', color='red', ms=1, lw=0., label='somatic_spikes'),
@@ -656,7 +658,7 @@ def get_data_path(pars, ps_label='', add_to_path=''):
 
 
 ###############################################################################
-def matrix_prediction_performance(parameter_key_list, data_address, sequences, add_to_path='', fname=''):
+def matrix_prediction_performance(parameter_key_list, data_address, sequences=[], add_to_path='', fname=''):
     """For each spiking data s_j defined by parameter space in data_address, 
     compute the precition error and time to solution and store these as follow:
     data_i[j_p1,j_p2,...,j_pm]=error_j  
@@ -707,7 +709,7 @@ def matrix_prediction_performance(parameter_key_list, data_address, sequences, a
         data_path = get_data_path(params['data_path'], params['label'], add_to_path)
 
         print("\t\t data set %d/%d: %s/%s" % (cp + 1, len(PL), data_path, fname))
-        print("\n lambda_plus: %0.3f, lambda_h: %0.3f, seed: %d" % (params["syn_dict_ee"]["lambda_plus"], params["syn_dict_ee"]["lambda_h"],params["seed"]))
+        print("\n lambda_plus: %0.3f, lambda_h: %0.3f, seed: %d" % (params["syn_dict_ee"]["lambda_plus"], params["syn_dict_ee"]["lambda_h"], params["seed"]))
         print("\n")
 
         # construct index vector
@@ -716,24 +718,17 @@ def matrix_prediction_performance(parameter_key_list, data_address, sequences, a
             ind += [get_index(parameters[pk], getByDotNotation(params, pk))]
 
         # load spikes from reference data
-        somatic_spikes = load_spike_data(data_path, 'somatic_spikes')
-        dendriticAP = load_spike_data(data_path, 'idend_eval')
+        pred = load_data(data_path, 'prediction_performance')
 
-        # get recoding times of dendriticAP
-        dendriticAP_recording_times = load_data(data_path, 'idend_recording_times')
-        characters_to_subpopulations = load_data(data_path, 'characters_to_subpopulations')
+        error = pred['error']
 
-        # compute prediction performance
-        seq_avg_errors, seq_avg_false_positives, seq_avg_false_negatives, _ = compute_prediction_performance(
-            somatic_spikes, dendriticAP, dendriticAP_recording_times, characters_to_subpopulations, sequences, params)
-
-        time_to_solution = np.where(seq_avg_errors < 0.001)[0]
+        time_to_solution = np.where(error < 0.001)[0]
         try:
             initial_time_to_solution = time_to_solution[0] * params['episodes_to_testing']
         except:
             initial_time_to_solution = params['learning_episodes']
 
-        data["error"][tuple(ind)] = seq_avg_errors[-1]
+        data["error"][tuple(ind)] = error[-1]
         data["time_to_solution"][tuple(ind)] = initial_time_to_solution
     
     return data, P

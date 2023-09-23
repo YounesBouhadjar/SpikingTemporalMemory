@@ -148,8 +148,9 @@ def generate_sequences(params, data_path, fname):
             sequences = [['E', 'N', 'D', 'I', 'J'], ['L', 'N', 'D', 'I', 'K'], ['G', 'J', 'M', 'C', 'N'], 
                          ['F', 'J', 'M', 'C', 'I'], ['B', 'C', 'K', 'H', 'I'], ['A', 'C', 'K', 'H', 'F']]
         elif task_type == 3:
-            sequences = [['E', 'N', 'D', 'I', 'J'], ['L', 'N', 'D', 'I', 'K'], ['G', 'J', 'M', 'E', 'N'], 
-                         ['F', 'J', 'M', 'E', 'I'], ['B', 'C', 'K', 'B', 'I'], ['A', 'C', 'K', 'B', 'F']]
+            sequences = [['E', 'N', 'D', 'I', 'J'], ['L', 'N', 'D', 'I', 'K'], ['G', 'J', 'M', 'E', 'N'], ['F', 'J', 'M', 'E', 'I'], ['B', 'C', 'K', 'B', 'I'], ['A', 'C', 'K', 'B', 'F']]
+        elif task_type == 3.1:
+            sequences = [['B', 'D', 'I', 'C', 'H'], ['E', 'D', 'I', 'C', 'F'], ['F', 'B', 'C', 'A', 'H'], ['G', 'B', 'C', 'A', 'D'], ['E', 'C', 'I', 'H', 'A'], ['D', 'C', 'I', 'H', 'G']]
         elif task_type == 4:
             sequences = [['A', 'D', 'B', 'G', 'H', 'E'], ['F', 'D', 'B', 'G', 'H', 'C']]
         else:
@@ -356,6 +357,17 @@ def copy_scripts(pars, fname):
 
 
 ##############################################
+def load_numpy_spike_data(path, label, skip_rows=3):
+    """Load spike data from files."""
+
+    print("Load spiking data ...")
+
+    fname = '%s/%s.npy' % (path, label)
+    x = np.load(fname)
+
+    return x
+
+##############################################
 def load_spike_data(path, label, skip_rows=3):
     """Load spike data from files.
 
@@ -469,7 +481,7 @@ def number_active_neurons_per_element(test_sequences, times_somatic_spikes, send
     for seq in test_sequences:
         start_iterations = end_iterations
         end_iterations += len(seq)
-        num_active_neurons = {}
+        num_active_neurons = []
 
         # for each character in the sequence
         for k, (j, char) in enumerate(zip(range(start_iterations, end_iterations), seq)):
@@ -477,7 +489,7 @@ def number_active_neurons_per_element(test_sequences, times_somatic_spikes, send
                                     (times_somatic_spikes > excitation_times[j]))
             senders_soma = senders_somatic_spikes[indices_soma]
 
-            num_active_neurons[char] = len(senders_soma)
+            num_active_neurons.append(len(senders_soma))
 
         num_active_neurons_per_sequence.append(num_active_neurons)
 
@@ -601,11 +613,10 @@ def compute_prediction_performance(somatic_spikes, dendriticAP, dendriticAP_reco
                 idx_soma = np.where((somatic_spikes[:, 1] < rc_time + 2*params['DeltaT']) & 
                                     (somatic_spikes[:, 1] > rc_time + params['DeltaT']))[0]
 
-
             senders_soma = somatic_spikes[:, 0][idx_soma]
             num_active_neurons = len(senders_soma)
             num_active_dendrites = len(senders_dAP)
-
+ 
             # create the target vector 
             excited_subpopulations = characters_to_subpopulations[seqs[seq_num][-1]]
             excited_subpopulations_prev = characters_to_subpopulations[seqs[seq_num][-2]]

@@ -24,14 +24,42 @@ Authors
 Younes Bouhadjar
 """
 
+import os
+import wandb
 import nest
 import sys
 import time
+import copy
 import numpy as np
 
+import argparse
+from argparse import ArgumentParser
 from shtm import model, helper
+import sequence_generator as sg
+
+
+def create_parser():
+    """
+    Creates CLI parser
+    Returns
+    -------
+
+    """
+    parser_ = ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser_.add_argument("--yaml", dest="config_yaml", default=None)
+    parser_.add_argument("--exp-params", dest="exp_params",  default="parameters_space.py")
+    parser_.add_argument("--exp-params-idx", dest="exp_params_idx", type=int, default=0)
+    parser_.add_argument("--batch-id", dest="batch_idx", type=int, default=0)
+    parser_.add_argument("--jobmax", dest="jobmax", type=int, default=0)
+    parser_.add_argument("--hwb", dest="run_hwb", type=bool, default=False, help="enabled if hyperparameter search is executed")
+    parser_.add_argument("--wbm", dest="wb_mode", type=str, default="offline")
+    return parser_
+
 
 def generate_reference_data():
+
+    parser = create_parser()
+    args, unparsed = parser.parse_known_args()
 
     # ###########################################################
     # import nestml module
@@ -41,21 +69,39 @@ def generate_reference_data():
     #############################################################
     # get network and training parameters 
     # ===========================================================
-    PS = model.get_parameters()
+    #PS = model.get_parameters()
+    PS = __import__(args.exp_params.split(".")[0]).p
 
     # parameter-set id from command line (submission script)
     PL = helper.parameter_set_list(PS) 
-   
-    #TODO: use argparse with default values
-    try: 
-        batch_id=int(sys.argv[1])
-        batch_array_id=int(sys.argv[2])
-        JOBMAX=int(sys.argv[3])
-        array_id=batch_id*JOBMAX+batch_array_id
-    except:
-        array_id = 0
+
+    batch_id = args.batch_idx
+    batch_array_id = args.exp_params_idx
+    JOBMAX = args.jobmax
+    array_id=batch_id*JOBMAX+batch_array_id
 
     params = PL[array_id]
+
+    if args.run_hwb:
+        wandb.init(mode=args.wb_mode,
+                   project=PS['data_path']['project_name'],
+                   config=wandb.config #TODO: find a way to log params as well
+                  )
+
+        # TODO: alternatively these could be added to args (see above)
+        #params['syn_dict_ee']['lambda_h'] = wandb.config['lambda_h']
+        #params['syn_dict_ee']['lambda_minus'] =  wandb.config['lambda_minus']
+        params['syn_dict_ee']['lambda_plus'] =  wandb.config['lambda_plus']
+        params['p_target'] =  wandb.config['w_dep']
+        params['n_E'] =  wandb.config['n_E']
+        #params['syn_dict_ee']['zt'] = wandb.config['zt']
+
+    else:
+        wandb.init(mode=args.wb_mode,
+                   project=params['data_path']['project_name'],
+                   name = params['label'],
+                   config = params
+                  )
 
     # start time 
     time_start = time.time()
@@ -63,12 +109,54 @@ def generate_reference_data():
     # ###############################################################
     # specify sequences
     # ===============================================================
-    sequences, _, vocabulary = helper.generate_sequences(params['task'], params['data_path'], params['label'])
+    vocabulary_size = params['task']['vocabulary_size']          # vocabulary size (may be overwritten if redraw==False)
+    R = int(params['task']['R'])                                 # number of shared subsequences
+    O = int(params['task']['O'])                                 # length of shared subsequences ("order")
+    S = int(2*R)                                                 # number of sequences
+    C = int(O+2)                                                 # sequence length
+    minimal_prefix_length = 1   # minimal prefix length
+    minimal_postfix_length = 1  # minimal postfix length
+    redraw = True              # if redraw == True: pre- and postfixes may contain repeating elements 
+    seed = params['task']['seed']                      # RNG seed (int or None)
+    alphabet = sg.latin_alphabet                       # function defining type of alphabet (only important for printing)
+    
+    ####################    
+    
+    seq_set, shared_seq_set, vocabulary = sg.generate_sequences(S, C, R, O, vocabulary_size, minimal_prefix_length, minimal_postfix_length, seed, redraw)
+
+    sg.print_sequences(seq_set, shared_seq_set, vocabulary, label='(int)')
+    
+    shared_seq_set_transformed = sg.transform_sequence_set(shared_seq_set, alphabet)    
+    seq_set_transformed = sg.transform_sequence_set(seq_set, alphabet)
+    vocabulary_transformed = sg.transform_sequence(vocabulary, alphabet)
+
+    sg.print_sequences(seq_set_transformed, shared_seq_set_transformed, vocabulary_transformed, label='(latin)')
+    #params['M'] = len(vocabulary)
+ 
+    #seq_set_transformed = [['B', 'C', 'E', 'F', 'B', 'C', 'E', 'C', 'F', 'B', 'C', 'E'], ['B', 'C', 'E', 'C', 'F', 'B', 'C', 'E', 'D', 'E', 'F', 'B']]
+    #seq_set_transformed = [['A', 'D', 'D', 'E'], ['B', 'D', 'D', 'F']]
+    #seq_set_transformed = [['A', 'D', 'B', 'E'], ['C', 'D', 'B', 'F']]
+    #seq_set_transformed = [['A', 'D'], ['B', 'D']]
+    #vocabulary_transformed = ['A', 'B', 'C', 'D', 'E', 'F']
+
+    print(f"\n vocabulary size {len(vocabulary)}")
+
+    if params['store_training_data']:
+        fname = 'training_data'
+        fname_voc = 'vocabulary'
+        data_path = helper.get_data_path(params['data_path'])
+        print("\nSave training data to %s/%s" % (data_path, fname))
+        os.makedirs('%s/%s' % (data_path, params['label']), exist_ok=True)
+        np.save('%s/%s/%s' % (data_path, params['label'], fname), seq_set_transformed)
+        np.save('%s/%s/%s' % (data_path, params['label'], fname_voc), vocabulary_transformed)
+
+    #sequences, _, vocabulary = helper.generate_sequences(params['task'], params['data_path'], params['label'])
 
     # ###############################################################
     # create network
     # ===============================================================
-    model_instance = model.Model(params, sequences, vocabulary)
+    params['M'] = len(vocabulary_transformed)
+    model_instance = model.Model(params, seq_set_transformed, vocabulary_transformed)
     time_model = time.time()
 
     model_instance.create()
@@ -124,15 +212,20 @@ def generate_reference_data():
         #print(zs[id_zs])
 
         # load spikes from reference data
-        somatic_spikes = helper.load_spike_data(data_path, 'somatic_spikes')
-        idend_eval = helper.load_spike_data(data_path, 'idend_eval')
+        somatic_spikes = helper.load_numpy_spike_data(data_path, 'somatic_spikes')
+        idend_eval = helper.load_numpy_spike_data(data_path, 'idend_eval')
         excitation_times = helper.load_data(data_path, 'excitation_times')
 
         # get recoding times of dendriticAP
         idend_recording_times = helper.load_data(data_path, 'idend_recording_times')
         characters_to_subpopulations = helper.load_data(data_path, 'characters_to_subpopulations')
 
-        seq_avg_errors, seq_avg_false_positives, seq_avg_false_negatives, _ = helper.compute_prediction_performance(somatic_spikes, idend_eval, idend_recording_times, characters_to_subpopulations, model_instance.sequences, model_instance.params)
+        seq_avg_errors, seq_avg_false_positives, seq_avg_false_negatives, _ = helper.compute_prediction_performance(somatic_spikes, 
+                                                                                                                    idend_eval, 
+                                                                                                                    idend_recording_times, 
+                                                                                                                    characters_to_subpopulations, 
+                                                                                                                    model_instance.sequences, 
+                                                                                                                    model_instance.params)
 
         # get number of active neuron for each element in the sequence
         number_elements_per_batch = sum([len(seq) for seq in model_instance.sequences])
@@ -149,22 +242,27 @@ def generate_reference_data():
         for i, (sequence, seq_counts) in enumerate(zip(model_instance.sequences, num_active_neurons)): 
             seq = ''
             for j, (char, counts) in enumerate(zip(sequence, seq_counts)):
-                seq += str(char)+'('+ str(seq_counts[char])+')'.ljust(2)
+                seq += str(char)+'('+ str(counts)+')'.ljust(2)
 
-                if j != 0 and seq_counts[char] > 0.5*params['n_E']:
+                if j != 0 and counts > 0.5*params['n_E']:
                     count_false_negatives += 1
 
             print("sequence %d: %s" % (i, seq))   
 
         print("False negative counts", count_false_negatives)   
 
+        wandb.log({"loss": seq_avg_errors[-1], "fp": seq_avg_false_positives[-1], "fn": seq_avg_false_negatives[-1]})
+
+
+    wandb.finish()
+
     print("\n### Plasticity parameters")
     print("lambda plus: %0.4f" % params['syn_dict_ee']['lambda_plus'])
     print("lambda homeostasis: %0.4f" % params['syn_dict_ee']['lambda_h'])
     print("lambda minus: %0.4f" % model_instance.params['syn_dict_ee']['lambda_minus']) 
-    print("inh factor:", params['inh_factor'])
     print("excitation step %0.1fms" % params['DeltaT']) #30-50  
     print("seed number: %d" % params['seed']) 
     print("number of learning episodes: %d" % params['learning_episodes'])
 
-generate_reference_data()
+if __name__ == '__main__':
+    generate_reference_data()
