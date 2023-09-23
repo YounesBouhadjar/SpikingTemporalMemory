@@ -481,7 +481,7 @@ def number_active_neurons_per_element(test_sequences, times_somatic_spikes, send
     for seq in test_sequences:
         start_iterations = end_iterations
         end_iterations += len(seq)
-        num_active_neurons = {}
+        num_active_neurons = []
 
         # for each character in the sequence
         for k, (j, char) in enumerate(zip(range(start_iterations, end_iterations), seq)):
@@ -489,7 +489,7 @@ def number_active_neurons_per_element(test_sequences, times_somatic_spikes, send
                                     (times_somatic_spikes > excitation_times[j]))
             senders_soma = senders_somatic_spikes[indices_soma]
 
-            num_active_neurons[char] = len(senders_soma)
+            num_active_neurons.append(len(senders_soma))
 
         num_active_neurons_per_sequence.append(num_active_neurons)
 

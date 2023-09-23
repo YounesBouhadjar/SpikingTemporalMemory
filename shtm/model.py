@@ -212,7 +212,7 @@ class Model:
         evr = self.params['soma_params']['tau_h']
         t = 0.
         while t < (self.sim_time+evr):
-            self.__normalize_incoming_weights()
+            self.__depression()
             nest.Simulate(evr)
             t += evr
     
@@ -692,20 +692,29 @@ class Model:
         """Normalizes weights of incoming synapses
         """
  
-        for neuron in self.exc_neurons:
-
-            #connection = nest.GetConnections(target=neuron, synapse_model='stdsp_synapse')
-            #per = nest.GetStatus(connection, 'permanence')
-            #if np.sum(per) == 0:
-            #    raise ZeroDivisionError('sum of weights is zero!!')
-        
-            #nest.SetStatus(connection, 'permanence', Pt*np.array(per/np.sum(per)))
+        for i, neuron in enumerate(self.exc_neurons):
 
             conn = nest.GetConnections(target=neuron, synapse_model='stdsp_synapse')
             per = np.array(conn.permanence)
-            p_normed = per / sum(abs(per))  # L1-norm
-            #conn.permanence = p_target * p_normed
-            nest.SetStatus(conn, 'permanence', self.params['p_target'] * p_normed)
+            x = np.where(per > self.params['syn_dict_ee']['th_perm'])
+
+            s = len(x[0])
+            per_dep = per - self.params['p_target']
+            per_norm = per_dep * sig(self.params['lr']-s) #/ y
+
+            nest.SetStatus(conn, 'permanence', per_norm)
+
+    def __depression(self, p_target=300.): 
+        """Normalizes weights of incoming synapses
+        """
+ 
+        for i, neuron in enumerate(self.exc_neurons):
+
+            conn = nest.GetConnections(target=neuron, synapse_model='stdsp_synapse')
+            per = np.array(conn.permanence)
+            per_dep = per - self.params['p_target']
+
+            nest.SetStatus(conn, 'permanence', per_dep)
 
 
 ##############################################
@@ -722,6 +731,11 @@ def get_parameters():
     params = parameters_space.p
 
     return params
+
+
+###########################################
+def sig(x):
+     return 1/(1 + np.exp(-x))
 
 
 ###########################################
