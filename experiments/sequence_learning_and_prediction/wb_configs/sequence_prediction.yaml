@@ -1,19 +1,19 @@
-project: sequence_learning_and_prediction_1206
+project: sequence_learning_and_prediction_2008
 program: training.py
 method: bayes
 metric:
   name: fn
   goal: minimize
 parameters:
-  zt:
-    max: 2.
-    min: 1.
-  lambda_h:
-    max: 0.02
-    min: 0.01
-  lambda_minus:
-    max: 0.002
-    min: 0.001
+#  zt:
+#    max: 2.
+#    min: 1.
+#  lambda_h:
+#    max: 0.02
+#    min: 0.01
+  p_target:
+    min: 0.00001
+    max: 0.0001
 #    'hidden_state_dim': {
 #        'max':500, 'min':10
 #        },

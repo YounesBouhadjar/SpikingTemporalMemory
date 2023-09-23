@@ -129,7 +129,7 @@ p['overwrite_files'] = True                    # if True, data will be overwritt
                                                # if False, a NESTError is raised if the files already exist
 p['seed'] = para.ParameterRange([1])           # seed for NEST
 p['print_simulation_progress'] = False         # print the time progress.
-p['n_threads'] = 8                             # number of threads per MPI process 
+p['n_threads'] = 16                             # number of threads per MPI process 
 p['pad_time'] = 5.
 p['idend_recording_interval'] = 10 * p['dt']   # dendritic current recording resolution
 p['idend_record_time'] = 8.                    # time interval after the external stimulation at which the dendritic current is recorded
