@@ -5,7 +5,7 @@
 To be able to run an experiment, first [prepare your python environment](../../README.md#prepare-your-python-environment) 
 and follow the [instructions for installing NEST and NESTML](../../README.md#reproduce-data-by-yourself).
 
-## Running an experiment
+## Running an experiment #TODO outdated
 
 1. On your local machine:
    ```bash 
