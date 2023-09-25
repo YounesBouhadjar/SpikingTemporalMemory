@@ -14,7 +14,7 @@ p['data_path']['parameterspace_label'] = 'sequence_learning_and_prediction_1206'
 
 # parameters for setting up the network  
 p['M'] = 16                  # number of subpopulations. Note that we use here 6 subpopulations rather than 14 (see Bouhadjar et al. 2022). This is just because we would like to accelerate the simulation, as the set of sequences in this specific experiment requires the use of only 6 subpopulations. We use M=14 in other experiments with more complex tasks such in the prediction performance experiments.
-p['n_E'] = 300               # number of excitatory neurons per subpopulation
+p['n_E'] = 172 #300               # number of excitatory neurons per subpopulation
 p['n_I'] = 1                 # number of inhibitory neurons per subpopulation
 p['L'] = 1                   # number of subpopulations that represents one sequence element
 p['pattern_size'] = 20       # sparse set of active neurons per subpopulation
@@ -74,7 +74,7 @@ p['syn_dict_ee']['th_perm'] = 10.                    # synapse maturity threshol
 p['syn_dict_ee']['tau_plus'] = 20.                   # plasticity time constant (potentiation)
 p['syn_dict_ee']['delay'] = 2.                       # dendritic delay 
 p['syn_dict_ee']['receptor_type'] = 2                # receptor corresponding to the dendritic input
-p['syn_dict_ee']['lambda_plus'] = 0.1                # potentiation rate
+p['syn_dict_ee']['lambda_plus'] = 0.17                # potentiation rate
 p['syn_dict_ee']['zt'] = 1.28 #para.ParameterRange([2., 3., 4.]) #4.438                          # target dAP trace
 p['syn_dict_ee']['lambda_h'] = 0.                    # homeostasis rate
 p['syn_dict_ee']['mu_plus'] = 0.                     # permanence dependence exponent, potentiation
@@ -85,7 +85,8 @@ p['syn_dict_ee']['Pmin'] = 1.                        # Minimum allowed permanenc
 p['syn_dict_ee']['lambda_minus'] = 0.# 001344 #0.015             # depression rate
 p['syn_dict_ee']['dt_min'] = -4.                     # minimum time lag of the STDP window
 p['inh_factor'] = 7.
-p['p_target'] = 0. * p['syn_dict_ee']['lambda_minus'] * p['syn_dict_ee']['Wmax'] #para.ParameterRange([600.,700.,800.])
+p['w_dep'] = 0.09442 
+p['p_target'] = 0.
 p['lr'] = 0.
 
 # parameters of EX synapses (external to soma of E neurons)
@@ -150,10 +151,10 @@ p['task'] = {}
 p['task']['vocabulary_size'] = 16                 # vocabulary size
 p['task']['S'] = 10                               # number of sequences
 p['task']['C'] = 10                               # sequence length
-p['task']['R'] = 5#para.ParameterRange(np.arange(2,5+1,1))                              # number of shared subsequences
-p['task']['O'] = 8#para.ParameterRange(np.arange(2,8+1,1))                              # length of shared subsequences ("order")
+p['task']['R'] = 2#5#para.ParameterRange(np.arange(2,5+1,1))                              # number of shared subsequences
+p['task']['O'] = 2#8#para.ParameterRange(np.arange(2,8+1,1))                              # length of shared subsequences ("order")
 p['task']['seed'] = 0                        # seed number
 
 # setup the training loop  
-p['learning_episodes'] = 300                     # total number of training episodes ('repetitions of the sequence sets')
+p['learning_episodes'] = 20                     # total number of training episodes ('repetitions of the sequence sets')
 p['episodes_to_testing'] = 10                   # number of episodes after which we measure the prediction perfomance

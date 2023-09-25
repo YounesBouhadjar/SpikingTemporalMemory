@@ -688,7 +688,7 @@ class Model:
         return target_firing_rate * t_exc
 
 
-    def __normalize_incoming_weights(self, p_target=300.): 
+    def __normalize_incoming_weights(self): 
         """Normalizes weights of incoming synapses
         """
  
@@ -704,7 +704,7 @@ class Model:
 
             nest.SetStatus(conn, 'permanence', per_norm)
 
-    def __depression(self, p_target=300.): 
+    def __depression(self): 
         """Normalizes weights of incoming synapses
         """
  
@@ -712,7 +712,7 @@ class Model:
 
             conn = nest.GetConnections(target=neuron, synapse_model='stdsp_synapse')
             per = np.array(conn.permanence)
-            per_dep = per - self.params['p_target']
+            per_dep = per - self.params['w_dep']
 
             nest.SetStatus(conn, 'permanence', per_dep)
 

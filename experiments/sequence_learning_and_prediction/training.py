@@ -91,9 +91,11 @@ def generate_reference_data():
         # TODO: alternatively these could be added to args (see above)
         #params['syn_dict_ee']['lambda_h'] = wandb.config['lambda_h']
         #params['syn_dict_ee']['lambda_minus'] =  wandb.config['lambda_minus']
-        params['syn_dict_ee']['lambda_plus'] =  wandb.config['lambda_plus']
-        params['p_target'] =  wandb.config['w_dep']
-        params['n_E'] =  wandb.config['n_E']
+        #params['syn_dict_ee']['lambda_plus'] =  wandb.config['lambda_plus']
+        #params['w_dep'] =  wandb.config['w_dep']
+        #params['n_E'] =  wandb.config['n_E']
+        params['task']['R'] = wandb.config['R']                                 # number of shared subsequences
+        params['task']['O'] = wandb.config['O']                                 # length of shared subsequences ("order")
         #params['syn_dict_ee']['zt'] = wandb.config['zt']
 
     else:
@@ -119,10 +121,13 @@ def generate_reference_data():
     redraw = True              # if redraw == True: pre- and postfixes may contain repeating elements 
     seed = params['task']['seed']                      # RNG seed (int or None)
     alphabet = sg.latin_alphabet                       # function defining type of alphabet (only important for printing)
-    
+   
     ####################    
     
-    seq_set, shared_seq_set, vocabulary = sg.generate_sequences(S, C, R, O, vocabulary_size, minimal_prefix_length, minimal_postfix_length, seed, redraw)
+    seq_set, shared_seq_set, vocabulary = sg.generate_sequences(S, C, R, O, 
+                                                                vocabulary_size, 
+                                                                minimal_prefix_length, 
+                                                                minimal_postfix_length, seed, redraw)
 
     sg.print_sequences(seq_set, shared_seq_set, vocabulary, label='(int)')
     
@@ -130,7 +135,8 @@ def generate_reference_data():
     seq_set_transformed = sg.transform_sequence_set(seq_set, alphabet)
     vocabulary_transformed = sg.transform_sequence(vocabulary, alphabet)
 
-    sg.print_sequences(seq_set_transformed, shared_seq_set_transformed, vocabulary_transformed, label='(latin)')
+    sg.print_sequences(seq_set_transformed, shared_seq_set_transformed, 
+                       vocabulary_transformed, label='(latin)')
     #params['M'] = len(vocabulary)
  
     #seq_set_transformed = [['B', 'C', 'E', 'F', 'B', 'C', 'E', 'C', 'F', 'B', 'C', 'E'], ['B', 'C', 'E', 'C', 'F', 'B', 'C', 'E', 'D', 'E', 'F', 'B']]
@@ -138,8 +144,6 @@ def generate_reference_data():
     #seq_set_transformed = [['A', 'D', 'B', 'E'], ['C', 'D', 'B', 'F']]
     #seq_set_transformed = [['A', 'D'], ['B', 'D']]
     #vocabulary_transformed = ['A', 'B', 'C', 'D', 'E', 'F']
-
-    print(f"\n vocabulary size {len(vocabulary)}")
 
     if params['store_training_data']:
         fname = 'training_data'
@@ -151,6 +155,7 @@ def generate_reference_data():
         np.save('%s/%s/%s' % (data_path, params['label'], fname_voc), vocabulary_transformed)
 
     #sequences, _, vocabulary = helper.generate_sequences(params['task'], params['data_path'], params['label'])
+    print(f"\n vocabulary_size {len(vocabulary_transformed)}, R={R}, O={O}, S={S}, C={C}")
 
     # ###############################################################
     # create network
