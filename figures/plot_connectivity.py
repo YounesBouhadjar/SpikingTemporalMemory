@@ -1,3 +1,4 @@
+import os
 import sys
 import copy
 from matplotlib import gridspec
@@ -138,5 +139,9 @@ ticks_minor = (np.arange(1, params['M'])) * scale
 plt.xlabel('source') 
 plt.ylabel('target')
 
-print('connectivity_matrix.pdf')
-plt.savefig('connectivity_matrix.pdf')
+print('--------------------------------------------------')
+path = 'img'
+fname = 'connectivity_matrix'
+print('save here: %s/%s.pdf ...' % (path, fname))
+os.system('mkdir -p %s' % (path))
+plt.savefig('%s/%s.pdf' % (path, fname))
