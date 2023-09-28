@@ -11,18 +11,19 @@ import utils
 path_dict = {} 
 path_dict['data_root_path'] = 'data'
 path_dict['project_name'] = 'sequence_learning_performance' 
-path_dict['parameterspace_label'] = 'sequence_learning_and_prediction_1604'
+path_dict['parameterspace_label'] = 'sequence_learning_and_prediction_1206'
 
 # get parameters 
 PS, PS_path = utils.get_parameter_set(path_dict)
 
 PL = utils.parameter_set_list(PS)
 params = PL[0]
+label = params['label']
 replay = False
 
 # get trained sequences
-sequences = load_data(PS_path, 'training_data')
-vocabulary = load_data(PS_path, 'vocabulary')
+sequences = load_data(PS_path,  f'{label}/training_data')
+vocabulary = load_data(PS_path, f'{label}/vocabulary')
 
 print('#### sequences used for training ### ')
 for i, sequence in enumerate(sequences): 

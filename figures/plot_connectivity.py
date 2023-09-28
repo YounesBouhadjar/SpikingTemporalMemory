@@ -10,7 +10,7 @@ import utils
 path_dict = {}
 path_dict['data_root_path'] = 'data'
 path_dict['project_name'] = 'sequence_learning_performance'
-path_dict['parameterspace_label'] = 'sequence_learning_and_prediction'
+path_dict['parameterspace_label'] = 'sequence_learning_and_prediction_1206'
 
 ########################
 # load data
@@ -24,14 +24,15 @@ PS_sel = copy.deepcopy(PS)
 
 params = utils.parameter_set_list(PS_sel)[0]
 num_neurons = params['M'] * params['n_E']
-
-# get data path
-data_path = utils.get_data_path(params['data_path'], params['label'])
+label = params['label']
 
 # get trained sequences
 # TODO load data training fails if the sequences are not of the same length
-sequences = load_data(PS_path, 'training_data')
-vocabulary = load_data(PS_path, 'vocabulary')
+sequences = load_data(PS_path, f'{label}/training_data')
+vocabulary = load_data(PS_path, f'{label}/vocabulary')
+
+# get data path
+data_path = utils.get_data_path(params['data_path'], params['label'])
 
 print('#### sequences used for training ### ')
 for i, sequence in enumerate(sequences): 
@@ -119,20 +120,6 @@ p1 = plt.scatter(premature_connections[0][x_p], premature_connections[1][x_p], s
 # plot mature connections
 p2 = plt.scatter(mature_connections[0][x_m], mature_connections[1][x_m], s=s, marker='o', color=mat_color, zorder=1, label='mature connections')
 
-#print(letters_to_active_neurons[0])
-#exit()
-
-# color connections belonging to the trained sequences
-#for ns, seq in enumerate(sequences):
-#    for char, char_next in zip(seq, seq[1:]):
-#        sources = letters_to_active_neurons[ns][char]
-#        targets = letters_to_active_neurons[ns][char_next]
-#
-#        for src in sources:
-#            for tg in targets:
-#                plot_pt = np.random.choice([True, False], 1, p=[1, 0])
-#                if plot_pt and connection_matrix[int(src-1),int(tg-1)] > th_mature_connections:
-#                    p3 = plt.scatter(src-1, tg-1, s=s, marker='o', color=color_seq[ns],zorder=2)
 #
 plt.xlim(-1, num_neurons)
 plt.ylim(-1, num_neurons)
@@ -147,12 +134,6 @@ plt.yticks(conn_matrix_ticks_pos*scale, conn_matrix_ticks_label)
 
 # Minor ticks
 ticks_minor = (np.arange(1, params['M'])) * scale
-#plt.xticks(ticks_minor, minor=True)
-#plt.yticks(ticks_minor, minor=True)
-
-# Gridlines based on minor ticks
-#ax.grid(which='minor', color='black', linestyle='-', linewidth=0.5)
-#ax.tick_params(axis=u'both', which=u'both',length=0)
 
 plt.xlabel('source') 
 plt.ylabel('target')
