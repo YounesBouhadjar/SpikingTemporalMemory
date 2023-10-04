@@ -43,14 +43,15 @@ neuron iaf_psc_exp_nonlineardendrite:
     theta_dAP pA = 60pA              # current threshold for a dendritic action potential
     I_p pA = 250pA                   # current clamp value for I_dAP during a dendritic action potential 
     tau_dAP ms = 60ms                # time window over which the dendritic current clamp is active
-    dAP_timeout_ticks integer = steps(tau_dAP) 
- 
+
     # refractory parameters 
     t_ref ms = 10ms                            # refractory period
-    ref_timeout_ticks integer = steps(t_ref)    
+
   end
  
   internals:
+    dAP_timeout_ticks integer = steps(tau_dAP) 
+    ref_timeout_ticks integer = steps(t_ref)    
     dAP_counts integer = 0
     ref_counts integer = 0
   end
