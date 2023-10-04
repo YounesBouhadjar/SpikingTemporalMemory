@@ -11,7 +11,7 @@ import utils
 path_dict = {} 
 path_dict['data_root_path'] = 'data'
 path_dict['project_name'] = 'sequence_learning_performance' 
-path_dict['parameterspace_label'] = 'sequence_learning_and_prediction_1206'
+path_dict['parameterspace_label'] = 'sequence_learning_and_prediction'
 
 # get parameters 
 PS, PS_path = utils.get_parameter_set(path_dict)
@@ -42,7 +42,7 @@ print('data path', data_path)
 
 # load spikes from reference data
 somatic_spikes = load_numpy_spike_data(data_path, 'somatic_spikes')
-dendritic_current = load_spike_data(data_path, 'idend_last_episode')
+dendritic_current = load_numpy_spike_data(data_path, 'idend_last_episode')
 #dendritic_current = load_numpy_spike_data(data_path, 'idend_eval')
 
 # get recoding times of dendriticAP

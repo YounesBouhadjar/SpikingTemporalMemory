@@ -11,7 +11,7 @@ import utils
 path_dict = {}
 path_dict['data_root_path'] = 'data'
 path_dict['project_name'] = 'sequence_learning_performance'
-path_dict['parameterspace_label'] = 'sequence_learning_and_prediction_1206'
+path_dict['parameterspace_label'] = 'sequence_learning_and_prediction'
 
 ########################
 # load data
