@@ -229,7 +229,7 @@ class Model:
 
         #x = helper.load_numpy_spike_data(self.data_path, fname)
 
-        # record dendritic currents
+        # record dendritic currents corresponding to last elements in sequences
         times = []
         senders = []
         I_dends = []
@@ -251,16 +251,17 @@ class Model:
         print("save data to %s/%s ..." % (self.data_path, fname))
         np.save('%s/%s' % (self.data_path, fname), data)
 
-        #x = helper.load_numpy_spike_data(self.data_path, fname)
+        # record dendritic currents of last episode
+        if self.params['record_idend_last_episode']:
+            senders = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['senders']
+            times = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['times']
+            I_dends = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['I_dend']
 
-        #import matplotlib.pyplot as plt
-        #plt.figure()
-        #plt.plot(time[-500:], sender[-500:], 'o', color='red', lw=0., ms=1.)
-
-        #plt.xlabel('time (ms)')
-        #plt.ylabel('sender')
-
-        #plt.savefig('spiking_activity.pdf')
+            data = np.array([senders, times, I_dends]).T
+                    
+            fname = 'idend_last_episode'
+            print("save data to %s/%s ..." % (self.data_path, fname))
+            np.save('%s/%s' % (self.data_path, fname), data)
 
     def __create_neuronal_populations(self):
         """'Create neuronal populations
@@ -295,8 +296,7 @@ class Model:
 
            # create a parrot neuron and a spike recorder to record from the pulsepacket_generator
            self.packet_parrot = nest.Create('parrot_neuron')
-           self.spike_packet_recorder = nest.Create('spike_recorder', params={'record_to': 'ascii',
-                                                                              'label': 'spike_packet'})
+           self.spike_packet_recorder = nest.Create('spike_recorder')
 
         else:
         
@@ -317,21 +317,13 @@ class Model:
         """Create recording devices
         """
 
-        # create a spike recorder for exc neurons
-        #self.spike_recorder_soma = nest.Create('spike_recorder', params={'record_to': 'ascii',
-        #                                                                 'label': 'somatic_spikes'})
         self.spike_recorder_soma = nest.Create('spike_recorder')
 
         # create a spike recorder for inh neurons
-        self.spike_recorder_inh = nest.Create('spike_recorder', params={'record_to': 'ascii',
-                                                               'label': 'inh_spikes'})
+        self.spike_recorder_inh = nest.Create('spike_recorder')
 
         # create multimeter to record dendritic currents of exc_neurons at the time of the last element in the sequence
         if self.params['evaluate_performance']:
-            #self.multimeter_idend_eval = nest.Create('multimeter', self.num_sequences,
-            #                                         params={'record_from': ['I_dend'],
-            #                                                 'record_to': 'ascii',
-            #                                                 'label': 'idend_eval'})
 
             self.multimeter_idend_eval = nest.Create('multimeter', self.num_sequences,
                                                      params={'record_from': ['I_dend']}
@@ -343,9 +335,11 @@ class Model:
 
         # create multimeter for recording dendritic current from all subpopulations of the last episode
         if self.params['record_idend_last_episode']:
-            self.multimeter_idend_last_episode = nest.Create('multimeter', params={'record_from': ['I_dend'],
-                                                                                   'record_to': 'ascii',
-                                                                                   'label': 'idend_last_episode'})
+
+            #print("record_idend_last_episode is not supported yet. Need to add manual saving of the data in the function simulate")
+            #raise
+
+            self.multimeter_idend_last_episode = nest.Create('multimeter', params={'record_from': ['I_dend']})
 
             if self.params['evaluate_replay']:
                 idend_dict = {'interval': self.params['idend_recording_interval'],
@@ -369,9 +363,7 @@ class Model:
         # create a voltmeter for recording membrane voltages
         if self.params['record_voltage'] and self.params['add_bkgd_noise']:
             self.vm = nest.Create('voltmeter', params={'record_from': ['V_m'], 
-                                                       'record_to': 'ascii',
                                                        'interval': self.params['vm_recording_interval'], 
-                                                       'label': 'vm',
                                                        'start':excitation_times[-number_elements_per_batch],
                                                        'stop': excitation_times[-1] + self.params['pad_time']})
 
@@ -379,7 +371,7 @@ class Model:
         """Create weight recorder
         """
 
-        self.wr = nest.Create('weight_recorder', {'record_to': 'ascii', 'label': 'weight_recorder'})
+        self.wr = nest.Create('weight_recorder')
         #self.params['syn_dict_ee']['weight_recorder'] = self.wr
         nest.CopyModel('stdsp_synapse', 'stdsp_synapse_rec', {'weight_recorder': self.wr})
         self.params['syn_dict_ee']['synapse_model'] = 'stdsp_synapse_rec'

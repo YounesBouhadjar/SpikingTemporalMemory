@@ -30,9 +30,11 @@ import nest
 import sys
 import time
 import copy
-import numpy as np
-
+import hashlib
 import argparse
+
+import numpy as np
+from pprint import pformat
 from argparse import ArgumentParser
 from shtm import model, helper
 import sequence_generator as sg
@@ -96,6 +98,7 @@ def generate_reference_data():
         #params['n_E'] =  wandb.config['n_E']
         params['task']['R'] = wandb.config['R']                                 # number of shared subsequences
         params['task']['O'] = wandb.config['O']                                 # length of shared subsequences ("order")
+        params['label'] = hashlib.md5(pformat(dict(params)).encode('utf-8')).hexdigest()
         #params['syn_dict_ee']['zt'] = wandb.config['zt']
 
     else:
@@ -211,11 +214,6 @@ def generate_reference_data():
     
         data_path = helper.get_data_path(model_instance.params['data_path'], model_instance.params['label'])
 
-        # print Ic
-        #zs = np.array([nest.GetStatus(model_instance.exc_neurons)[i]['z'] for i in range(params['M']*params['n_E'])])
-        #id_zs = np.where(zs>0.5)
-        #print(zs[id_zs])
-
         # load spikes from reference data
         somatic_spikes = helper.load_numpy_spike_data(data_path, 'somatic_spikes')
         idend_eval = helper.load_numpy_spike_data(data_path, 'idend_eval')
@@ -240,7 +238,11 @@ def generate_reference_data():
         idx_times = np.where((np.array(excitation_times) > start_time) & (np.array(excitation_times) < end_time))  
         excitation_times_sel = np.array(excitation_times)[idx_times]
 
-        num_active_neurons = helper.number_active_neurons_per_element(model_instance.sequences, somatic_spikes[:,1], somatic_spikes[:,0], excitation_times_sel, params['fixed_somatic_delay'])
+        num_active_neurons = helper.number_active_neurons_per_element(model_instance.sequences, 
+                                                                      somatic_spikes[:,1], 
+                                                                      somatic_spikes[:,0], 
+                                                                      excitation_times_sel, 
+                                                                      params['fixed_somatic_delay'])
 
         print("\n##### testing sequences with number of somatic spikes ")
         count_false_negatives = 0

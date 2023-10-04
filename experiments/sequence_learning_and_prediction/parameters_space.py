@@ -10,7 +10,7 @@ p = para.ParameterSpace({})
 p['data_path'] = {}
 p['data_path']['data_root_path'] = 'data'
 p['data_path']['project_name'] = 'sequence_learning_performance'
-p['data_path']['parameterspace_label'] = 'sequence_learning_and_prediction_1206'
+p['data_path']['parameterspace_label'] = 'sequence_learning_and_prediction'
 
 # parameters for setting up the network  
 p['M'] = 16                  # number of subpopulations. Note that we use here 6 subpopulations rather than 14 (see Bouhadjar et al. 2022). This is just because we would like to accelerate the simulation, as the set of sequences in this specific experiment requires the use of only 6 subpopulations. We use M=14 in other experiments with more complex tasks such in the prediction performance experiments.
@@ -142,7 +142,7 @@ p['record_idend_last_episode'] = True          # used for debugging, if turned o
 p['store_training_data'] = True                                               
 p['store_connections'] = True
 p['load_connections'] = False
-p['sparse_first_char'] = True                 # if turned on, the dAP of a subset of neurons in the subpopulation representing 
+p['sparse_first_char'] = True                  # if turned on, the dAP of a subset of neurons in the subpopulation representing 
                                                # first sequence elements is activated externally 
 p['active_weight_recorder'] = False            # if turned on, the weights are recorded every presynaptic spike
 
@@ -156,5 +156,5 @@ p['task']['O'] = 2#8#para.ParameterRange(np.arange(2,8+1,1))                    
 p['task']['seed'] = 0                        # seed number
 
 # setup the training loop  
-p['learning_episodes'] = 20                     # total number of training episodes ('repetitions of the sequence sets')
-p['episodes_to_testing'] = 10                   # number of episodes after which we measure the prediction perfomance
+p['learning_episodes'] = 200                 # total number of training episodes ('repetitions of the sequence sets')
+p['episodes_to_testing'] = 100                # number of episodes after which we measure the prediction perfomance
