@@ -63,7 +63,7 @@ def select_random_elements_from_vocabulary(N, vocabulary, redraw=False):
     Parameters
     -----------
     N: int
-       Number charcters to be drawn from the vocabulary.
+       Number characters to be drawn from the vocabulary.
 
     vocabulary: list(int)
                 Vocabulary.
