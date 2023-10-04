@@ -117,8 +117,12 @@ def generate_reference_data():
     vocabulary_size = params['task']['vocabulary_size']          # vocabulary size (may be overwritten if redraw==False)
     R = int(params['task']['R'])                                 # number of shared subsequences
     O = int(params['task']['O'])                                 # length of shared subsequences ("order")
-    S = int(2*R)                                                 # number of sequences
-    C = int(O+2)                                                 # sequence length
+    if R != 0:
+        S = int(2*R)                                             # number of sequences
+        C = int(O+2)                                             # sequence length
+    else:
+        S = int(params['task']['S'])                             # number of sequences
+        C = int(params['task']['C'])                             # sequence length
     minimal_prefix_length = 1   # minimal prefix length
     minimal_postfix_length = 1  # minimal postfix length
     redraw = True              # if redraw == True: pre- and postfixes may contain repeating elements 
@@ -133,13 +137,14 @@ def generate_reference_data():
                                                                 minimal_postfix_length, seed, redraw)
 
     sg.print_sequences(seq_set, shared_seq_set, vocabulary, label='(int)')
-    
+
     shared_seq_set_transformed = sg.transform_sequence_set(shared_seq_set, alphabet)    
     seq_set_transformed = sg.transform_sequence_set(seq_set, alphabet)
     vocabulary_transformed = sg.transform_sequence(vocabulary, alphabet)
 
     sg.print_sequences(seq_set_transformed, shared_seq_set_transformed, 
                        vocabulary_transformed, label='(latin)')
+    
     #params['M'] = len(vocabulary)
  
     #seq_set_transformed = [['B', 'C', 'E', 'F', 'B', 'C', 'E', 'C', 'F', 'B', 'C', 'E'], ['B', 'C', 'E', 'C', 'F', 'B', 'C', 'E', 'D', 'E', 'F', 'B']]

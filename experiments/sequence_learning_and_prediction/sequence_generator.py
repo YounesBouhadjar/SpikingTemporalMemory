@@ -63,7 +63,7 @@ def select_random_elements_from_vocabulary(N, vocabulary, redraw=False):
     Parameters
     -----------
     N: int
-       Number charcters to be drawn form the vocabulary.
+       Number charcters to be drawn from the vocabulary.
 
     vocabulary: list(int)
                 Vocabulary.
@@ -173,17 +173,26 @@ def generate_sequences(S, C, R, O, vocabulary_size, minimal_prefix_length = 0, m
     
     vocabulary = list(range(vocabulary_size))
     
-    shared_seq_set, reduced_vocabulary = generate_disjoint_sequences(R, O, vocabulary)
-    
-    seq_set = []
-    for cs in range(S):
-        this_shared_seq = shared_seq_set[np.random.randint(R)]  ## pick random shared subsequence
-        ## starting position of shared subasequence
-        start_position = np.random.randint(low=minimal_prefix_length,high=C-O-minimal_postfix_length+1) 
-        prefix, reduced_vocabulary = select_random_elements_from_vocabulary(start_position,reduced_vocabulary,redraw = redraw)
-        postfix, reduced_vocabulary = select_random_elements_from_vocabulary(C-(start_position+O),reduced_vocabulary,redraw = redraw)
-        seq_set += [prefix + this_shared_seq + postfix]           
+    if S > 1 and R != 0:
+        shared_seq_set, reduced_vocabulary = generate_disjoint_sequences(R, O, vocabulary)
         
+        seq_set = []
+        for cs in range(S):
+            this_shared_seq = shared_seq_set[np.random.randint(R)]  ## pick random shared subsequence
+            ## starting position of shared subsequence
+            start_position = np.random.randint(low=minimal_prefix_length,high=C-O-minimal_postfix_length+1) 
+            prefix, reduced_vocabulary = select_random_elements_from_vocabulary(start_position,reduced_vocabulary,redraw = redraw)
+            postfix, reduced_vocabulary = select_random_elements_from_vocabulary(C-(start_position+O),reduced_vocabulary,redraw = redraw)
+            seq_set += [prefix + this_shared_seq + postfix]   
+    else:
+        seq_set = []
+        shared_seq_set = []
+        reduced_vocabulary = list(np.copy(vocabulary))
+        for cs in range(S):
+            print(reduced_vocabulary)
+            sequence, reduced_vocabulary = select_random_elements_from_vocabulary(C, vocabulary=reduced_vocabulary, redraw=False)
+            seq_set += [sequence]   
+
     return seq_set, shared_seq_set, vocabulary
 
 ##############################################################################
