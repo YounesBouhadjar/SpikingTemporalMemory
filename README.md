@@ -25,7 +25,7 @@ The code relies on a custom synapse and neuron model that you can get by install
 
 ## Preparing NEST installation
 
-1. Get the following NEST version [git repository](https://github.com/YounesBouhadjar/nest-simulator/tree/stdsp_synapse) and checkout the correct branch:
+1. Get the following NEST version [git repository](https://github.com/YounesBouhadjar/nest-simulator/tree/stdsp_synapse_v2) and checkout the correct branch:
    ```bash
    git clone git@github.com:YounesBouhadjar/nest-simulator.git nest-shtm
    cd nest-shtm
