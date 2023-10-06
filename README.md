@@ -29,7 +29,7 @@ The code relies on a custom synapse and neuron model that you can get by install
    ```bash
    git clone git@github.com:YounesBouhadjar/nest-simulator.git nest-shtm
    cd nest-shtm
-   git checkout stdsp_synapse
+   git checkout stdsp_synapse_v2
    ```
    the only difference between this NEST version and the master version is that it includes the new synapse model 'stdsp_synapse'
 
