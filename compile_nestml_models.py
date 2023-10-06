@@ -5,7 +5,7 @@ import nest
 from pathlib import Path
 
 nestml_neuron_model = 'iaf_psc_exp_nonlineardendrite'
-nestml_synapse_model = 'stdsp_homeostasis_synapse'
+nestml_synapse_model = 'stdsp_synapse'
 
 nest_build_dir = str(Path(nest.__path__[0]).parent.parent.parent.parent)
 input_path = 'nestml_models/'
