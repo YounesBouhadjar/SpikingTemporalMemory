@@ -613,7 +613,7 @@ class Model:
         connections = nest.GetConnections(synapse_model=self.params['syn_dict_ee']['synapse_model'])
  
         syn_model = self.params['syn_dict_ee_synapse_model']
-        if syn_model == 'stdsp_homeostasis_synapse' or syn_model == 'stdsp_homeostasis_synapse_rec':
+        if syn_model[:5] == 'stdsp':
             connections.set({'Pmin': connections.p})
         else:
             connections.set({'Wmin': connections.weight})
@@ -630,7 +630,7 @@ class Model:
         print('\nSave connections ...')
         connections_all = nest.GetConnections(synapse_model=self.params['syn_dict_ee']['synapse_model'])
 
-        if self.params['syn_dict_ee_synapse_model'] == 'stdsp_homeostasis_synapse':
+        if self.params['syn_dict_ee_synapse_model'][:5] == 'stdsp':
             connections = nest.GetStatus(connections_all, ['target', 'source', 'weight', 'p'])
         else:
             connections = nest.GetStatus(connections_all, ['target', 'source', 'weight'])
@@ -655,7 +655,7 @@ class Model:
         conns_src = [int(conn[1]) for conn in conns]
         conns_weights = [conn[2] for conn in conns]
 
-        if self.params['syn_dict_ee_synapse_model'] == 'stdsp_homeostasis_synapse':
+        if self.params['syn_dict_ee_synapse_model'][:5] == 'stdsp':
             conns_perms = [conn[3] for conn in conns]
 
         if self.params['evaluate_replay']:
@@ -664,7 +664,7 @@ class Model:
                         'weight': conns_weights}
             nest.Connect(conns_src, conns_tg, 'one_to_one', syn_dict)
         else:
-            if self.params['syn_dict_ee_synapse_model'] == 'stdsp_homeostasis_synapse':
+            if self.params['syn_dict_ee_synapse_model'][:5] == 'stdsp':
                 del self.params['syn_dict_ee']['p']
             syn_dict_ee = copy.deepcopy(self.params['syn_dict_ee'])
 
@@ -674,7 +674,7 @@ class Model:
 
             nest.SetDefaults(self.params['syn_dict_ee']['synapse_model'], syn_dict_ee)
 
-            if self.params['syn_dict_ee_synapse_model'] == 'stdsp_homeostasis_synapse':
+            if self.params['syn_dict_ee_synapse_model'][:5] == 'stdsp':
                 syn_dict = {'synapse_model': self.params['syn_dict_ee']['synapse_model'],
                             'receptor_type': 2,
                             'weight': conns_weights,

@@ -68,11 +68,11 @@ p['syn_dict_ee'] = {}
 p['p_min'] = 0.
 p['p_max'] = 8.
 p['calibration'] = 0.
-p['syn_dict_ee_synapse_model'] = 'stdsp_homeostasis_synapse'
 p['syn_dict_ee']['weight'] = 0.                      # synaptic weight
 p['syn_dict_ee']['delay'] = 2.0
-p['syn_dict_ee']['synapse_model'] = 'stdsp_homeostasis_synapse'  # synapse model
+p['syn_dict_ee']['synapse_model'] = 'stdsp_synapse'  # synapse model
 p['syn_dict_ee']['th_perm'] = 10.                    # synapse maturity threshold
+p['syn_dict_ee']['tau_perm'] = 18500.                # time constant of permanence leakage
 p['syn_dict_ee']['tau_tr_pre'] = 20.                 # plasticity time constant (potentiation)
 p['syn_dict_ee']['tau_tr_post'] = 20. 
 p['syn_dict_ee']['receptor_type'] = 2                # receptor corresponding to the dendritic input
@@ -83,10 +83,11 @@ p['syn_dict_ee']['mu_plus'] = 0.                     # permanence dependence exp
 p['syn_dict_ee']['Wmax'] = 1.1 * p['soma_params']['theta_dAP'] / p['convergence']   # Maximum allowed weight
 p['syn_dict_ee']['Pmax'] = 20.                       # Maximum allowed permanence
 p['syn_dict_ee']['Pmin'] = 1.                        # Minimum allowed permanence
-p['syn_dict_ee']['lambda_minus'] = 0.0015            # depression rate
+p['syn_dict_ee']['lambda_minus'] = 0.0               # depression rate
 p['syn_dict_ee']['dt_min'] = -4.                     # minimum time lag of the STDP window
 p['inh_factor'] = 7.
 #p['p_target'] = para.ParameterRange([600.,700.,800.])
+p['syn_dict_ee_synapse_model'] = p['syn_dict_ee']['synapse_model']
 
 # parameters of EX synapses (external to soma of E neurons)
 p['conn_dict_ex'] = {}
@@ -160,5 +161,5 @@ if p['task']['task_name'] != 'hard_coded':
     p['task']['replace'] = False               # random choice of characters with replacement
 
 # setup the training loop  
-p['learning_episodes'] = 85                     # total number of training episodes ('repetitions of the sequence sets')
+p['learning_episodes'] = 20                     # total number of training episodes ('repetitions of the sequence sets')
 p['episodes_to_testing'] = 10                   # number of episodes after which we measure the prediction perfomance

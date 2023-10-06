@@ -218,7 +218,7 @@ def derived_parameters(params):
     # set initial weights (or permanences in the case of the structural synapse)
     import nest
 
-    if params['syn_dict_ee_synapse_model'] == 'stdsp_homeostasis_synapse':
+    if params['syn_dict_ee_synapse_model'][:5] == 'stdsp':
         params['syn_dict_ee']['p'] = nest.random.uniform(min=params['p_min'], max=params['p_max']) 
     else:
         params['syn_dict_ee']['weight'] = nest.random.uniform(min=params['w_min'], max=params['w_max'])

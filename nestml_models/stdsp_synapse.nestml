@@ -13,7 +13,7 @@ synapse stdsp_synapse:
     lambda_minus real = .01
     tau_tr_pre ms = 20 ms
     tau_tr_post ms = 20 ms
-    tau_perm ms = 1000 ms
+    tau_perm ms = 18500 ms
     mu_plus real = 1
     Wmax real = 100.
     Pmax real = 20.
