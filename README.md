@@ -25,11 +25,11 @@ The code relies on a custom synapse and neuron model that you can get by install
 
 ## Preparing NEST installation
 
-1. Get the following NEST version [git repository](https://github.com/YounesBouhadjar/nest-simulator/tree/stdsp_synapse) and checkout the correct branch:
+1. Get the following NEST version [git repository](https://github.com/YounesBouhadjar/nest-simulator/tree/stdsp_synapse_v2) and checkout the correct branch:
    ```bash
    git clone git@github.com:YounesBouhadjar/nest-simulator.git nest-shtm
    cd nest-shtm
-   git checkout stdsp_synapse
+   git checkout stdsp_synapse_v2
    ```
    the only difference between this NEST version and the master version is that it includes the new synapse model 'stdsp_synapse'
 
@@ -89,3 +89,12 @@ The code relies on a custom synapse and neuron model that you can get by install
     python compile_nestml_models.py
     ```
 
+## Running the hyperparameter search
+
+* To run the hyperparameter search you need to do the following:
+
+    * Add your config file to wb_configs, see wb_configs/default_sequence_prediction.yaml for an example
+    * Check `training.py`, whether you are properly using the parameters you want to do hyperparameter search over: use either the parser or the dict `wandb.config` 
+    * Run: python generate_sweep_id.py wb_configs/xxx_config.yaml, this would give you a sweep_id
+    * Run: wandb agent --count 500 wandb-user_name/project_name/sweep_id. This run the training sequentially for 500 times
+    * You could run the above command multiple times for a faster parameter search: you could do it manually or run `submission_cluster_sweep.py wandb-user_name/project_name/sweep_id 20`, where 20 is the number of parallel runs

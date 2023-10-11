@@ -39,10 +39,8 @@ import nest
 import copy
 import numpy as np
 from collections import defaultdict
-import sys
 
-sys.path.append('/home/lober/work/ext_spiking_tm/shtm')
-import helper
+from shtm import helper
 
 
 class Model:
@@ -191,7 +189,7 @@ class Model:
             nest.Connect(self.multimeter_idend_last_episode, self.exc_neurons)
 
         # set min synaptic strength
-        #self.__set_min_synaptic_strength()
+        self.__set_min_synaptic_strength()
 
         if self.params['add_bkgd_noise']:
             self.__connect_noise_sources()
@@ -210,13 +208,6 @@ class Model:
         # the simulation time is set during the creation of the network  
         if nest.Rank() == 0:
             print('\nSimulating {} ms.'.format(self.sim_time))
-
-        evr = self.params['soma_params']['tau_h']
-        t = 0.
-        #while t < (self.sim_time+evr):
-            #self.__normalize_incoming_weights()
-            #nest.Simulate(evr)
-            #t += evr
     
         nest.Simulate(self.sim_time)
 
@@ -229,18 +220,9 @@ class Model:
         print("save data to %s/%s ..." % (self.data_path, fname))
         np.save('%s/%s' % (self.data_path, fname), data)
 
-        # record inh somatic spikes
-        times = nest.GetStatus(self.spike_recorder_inh)[0]['events']['times']
-        senders = nest.GetStatus(self.spike_recorder_inh)[0]['events']['senders']
-
-        data = np.array([senders, times]).T
-        fname = 'inh_spikes'
-        print("save data to %s/%s ..." % (self.data_path, fname))
-        np.save('%s/%s' % (self.data_path, fname), data)
-
         #x = helper.load_numpy_spike_data(self.data_path, fname)
 
-        # record dendritic currents
+        # record dendritic currents corresponding to last elements in sequences
         times = []
         senders = []
         I_dends = []
@@ -262,27 +244,17 @@ class Model:
         print("save data to %s/%s ..." % (self.data_path, fname))
         np.save('%s/%s' % (self.data_path, fname), data)
 
-        # record dendritic currents last episode
-        senders = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['senders']
-        times = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['times']
-        I_dends = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['I_dend']
+        # record dendritic currents of last episode
+        if self.params['record_idend_last_episode']:
+            senders = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['senders']
+            times = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['times']
+            I_dends = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['I_dend']
 
-        data = np.array([senders, times, I_dends]).T
-                
-        fname = 'idend_last_episode'
-        print("save data to %s/%s ..." % (self.data_path, fname))
-        np.save('%s/%s' % (self.data_path, fname), data)
-
-        #x = helper.load_numpy_spike_data(self.data_path, fname)
-
-        #import matplotlib.pyplot as plt
-        #plt.figure()
-        #plt.plot(time[-500:], sender[-500:], 'o', color='red', lw=0., ms=1.)
-
-        #plt.xlabel('time (ms)')
-        #plt.ylabel('sender')
-
-        #plt.savefig('spiking_activity.pdf')
+            data = np.array([senders, times, I_dends]).T
+                    
+            fname = 'idend_last_episode'
+            print("save data to %s/%s ..." % (self.data_path, fname))
+            np.save('%s/%s' % (self.data_path, fname), data)
 
     def __create_neuronal_populations(self):
         """'Create neuronal populations
@@ -317,8 +289,7 @@ class Model:
 
            # create a parrot neuron and a spike recorder to record from the pulsepacket_generator
            self.packet_parrot = nest.Create('parrot_neuron')
-           self.spike_packet_recorder = nest.Create('spike_recorder', params={'record_to': 'ascii',
-                                                                              'label': 'spike_packet'})
+           self.spike_packet_recorder = nest.Create('spike_recorder')
 
         else:
         
@@ -339,21 +310,13 @@ class Model:
         """Create recording devices
         """
 
-        # create a spike recorder for exc neurons
-        #self.spike_recorder_soma = nest.Create('spike_recorder', params={'record_to': 'ascii',
-        #                                                                 'label': 'somatic_spikes'})
         self.spike_recorder_soma = nest.Create('spike_recorder')
 
         # create a spike recorder for inh neurons
-        self.spike_recorder_inh = nest.Create('spike_recorder') #, params={'record_to': 'ascii',
-                                                               #'label': 'inh_spikes'})
+        self.spike_recorder_inh = nest.Create('spike_recorder')
 
         # create multimeter to record dendritic currents of exc_neurons at the time of the last element in the sequence
         if self.params['evaluate_performance']:
-            #self.multimeter_idend_eval = nest.Create('multimeter', self.num_sequences,
-            #                                         params={'record_from': ['I_dend'],
-            #                                                 'record_to': 'ascii',
-            #                                                 'label': 'idend_eval'})
 
             self.multimeter_idend_eval = nest.Create('multimeter', self.num_sequences,
                                                      params={'record_from': ['I_dend']}
@@ -365,9 +328,11 @@ class Model:
 
         # create multimeter for recording dendritic current from all subpopulations of the last episode
         if self.params['record_idend_last_episode']:
-            self.multimeter_idend_last_episode = nest.Create('multimeter', params={'record_from': ['I_dend']}) #,
-                                                                                   #'record_to': 'ascii',
-                                                                                   #'label': 'idend_last_episode'})
+
+            #print("record_idend_last_episode is not supported yet. Need to add manual saving of the data in the function simulate")
+            #raise
+
+            self.multimeter_idend_last_episode = nest.Create('multimeter', params={'record_from': ['I_dend']})
 
             if self.params['evaluate_replay']:
                 idend_dict = {'interval': self.params['idend_recording_interval'],
@@ -385,14 +350,13 @@ class Model:
                 idend_dict = {'interval': self.params['idend_recording_interval'],
                               'start': excitation_times[-number_elements_per_batch],
                               'stop': excitation_times[-1] + self.params['pad_time']}
+
                 nest.SetStatus(self.multimeter_idend_last_episode, idend_dict)
 
         # create a voltmeter for recording membrane voltages
         if self.params['record_voltage'] and self.params['add_bkgd_noise']:
             self.vm = nest.Create('voltmeter', params={'record_from': ['V_m'], 
-                                                       'record_to': 'ascii',
                                                        'interval': self.params['vm_recording_interval'], 
-                                                       'label': 'vm',
                                                        'start':excitation_times[-number_elements_per_batch],
                                                        'stop': excitation_times[-1] + self.params['pad_time']})
 
@@ -400,10 +364,10 @@ class Model:
         """Create weight recorder
         """
 
-        self.wr = nest.Create('weight_recorder', {'record_to': 'ascii', 'label': 'weight_recorder'})
+        self.wr = nest.Create('weight_recorder')
         #self.params['syn_dict_ee']['weight_recorder'] = self.wr
-        nest.CopyModel(self.params['syn_dict_ee']['synapse_model'], 'stdsp_homeostasis_synapse_rec', {'weight_recorder': self.wr})
-        self.params['syn_dict_ee']['synapse_model'] = 'stdsp_homeostasis_synapse_rec'
+        nest.CopyModel(self.params['syn_dict_ee']['synapse_model'], 'stdsp_synapse_rec', {'weight_recorder': self.wr})
+        self.params['syn_dict_ee']['synapse_model'] = 'stdsp_synapse_rec'
 
     def __create_noise_sources(self):
         """Create noise sources
@@ -449,6 +413,7 @@ class Model:
         excitation_times = []
         sim_time = excitation_start
         for le in range(self.params['learning_episodes'] + 1):
+
             for seq_num, sequence in enumerate(self.sequences):
                 len_seq = len(sequence)
                 for i, char in enumerate(sequence):
@@ -507,9 +472,10 @@ class Model:
         """Connect excitatory neurons
         """
 
-        nest.CopyModel(self.params['syn_dict_ee']['synapse_model'], 'stdsp_synapse_nestml', {'d': self.params['syn_dict_ee']['delay']})
-        self.params['syn_dict_ee']['synapse_model'] = 'stdsp_synapse_nestml'
-        
+        if 'delay' in self.params['syn_dict_ee'].keys():
+            nest.CopyModel(self.params['syn_dict_ee']['synapse_model'], 'stdsp_synapse_d', {'d': self.params['syn_dict_ee']['delay']})
+            self.params['syn_dict_ee']['synapse_model'] = 'stdsp_synapse_d'
+
         nest.Connect(self.exc_neurons, self.exc_neurons, conn_spec=self.params['conn_dict_ee'],
                      syn_spec=self.params['syn_dict_ee'])
 
@@ -594,7 +560,7 @@ class Model:
 
         if self.params['load_connections']:
             # load connectivity: from characters to mini-subpopulations
-            path = helper.get_data_path(self.params['data_path'], self.params['label_conn'])
+            path = helper.get_data_path(self.params['data_path'], self.params['label'])
             characters_to_subpopulations = load_input_encoding(path, fname)
         else:
             for char in self.vocabulary:
@@ -646,10 +612,10 @@ class Model:
             name of the stored file
         """
 
-        assert self.params['syn_dict_ee']['synapse_model'] != 'stdsp_homeostasis_synapse_rec', "synapse model not tested yet"
+        assert self.params['syn_dict_ee']['synapse_model'] != 'stdsp_synapse_rec', "synapse model not tested yet"
 
         print('\nLoad connections ...')
-        data_path = helper.get_data_path(self.params['data_path'], self.params['label_conn'])
+        data_path = helper.get_data_path(self.params['data_path'], self.params['label'])
         conns = np.load('%s/%s.npy' % (data_path, label))
         conns_tg = [int(conn[0]) for conn in conns]
         conns_src = [int(conn[1]) for conn in conns]
@@ -664,13 +630,13 @@ class Model:
                         'weight': conns_weights}
             nest.Connect(conns_src, conns_tg, 'one_to_one', syn_dict)
         else:
-            if self.params['syn_dict_ee_synapse_model'][:5] == 'stdsp':
-                del self.params['syn_dict_ee']['p']
             syn_dict_ee = copy.deepcopy(self.params['syn_dict_ee'])
 
             del syn_dict_ee['synapse_model']
-            # del syn_dict_ee['w']
+            del syn_dict_ee['w']
             del syn_dict_ee['receptor_type']
+            if self.params['syn_dict_ee']['synapse_model'] == 'stdsp_synapse':
+                del syn_dict_ee['permanence']
 
             nest.SetDefaults(self.params['syn_dict_ee']['synapse_model'], syn_dict_ee)
 
@@ -680,7 +646,7 @@ class Model:
                             'weight': conns_weights,
                             'p': conns_perms}
             else:
-                syn_dict = {'synapse_model': 'stdsp_homeostasis_synapse',
+                syn_dict = {'synapse_model': 'stdsp_synapse',
                             'receptor_type': 2,
                             'weight': conns_weights}
 
@@ -711,25 +677,21 @@ class Model:
         return target_firing_rate * t_exc
 
 
-    def __normalize_incoming_weights(self, p_target=300.): 
+    def __normalize_incoming_weights(self): 
         """Normalizes weights of incoming synapses
         """
  
-        for neuron in self.exc_neurons:
+        for i, neuron in enumerate(self.exc_neurons):
 
-            #connection = nest.GetConnections(target=neuron, synapse_model='stdsp_homeostasis_synapse')
-            #per = nest.GetStatus(connection, 'permanence')
-            #if np.sum(per) == 0:
-            #    raise ZeroDivisionError('sum of weights is zero!!')
-        
-            #nest.SetStatus(connection, 'permanence', Pt*np.array(per/np.sum(per)))
+            conn = nest.GetConnections(target=neuron, synapse_model='stdsp_synapse')
+            per = np.array(conn.permanence)
+            x = np.where(per > self.params['syn_dict_ee']['th_perm'])
 
-            conn = nest.GetConnections(target=neuron, synapse_model=self.params['syn_dict_ee']['synapse_model'])
-            per = np.array(conn.p)
-            p_normed = per / sum(abs(per))  # L1-norm
-            #conn.permanence = p_target * p_normed
-            nest.SetStatus(conn, 'p', self.params['p_target'] * p_normed)
+            s = len(x[0])
+            per_dep = per - self.params['p_target']
+            per_norm = per_dep * sig(self.params['lr']-s) #/ y
 
+            nest.SetStatus(conn, 'permanence', per_norm)
 
 ##############################################
 def get_parameters():
@@ -745,6 +707,11 @@ def get_parameters():
     params = parameters_space.p
 
     return params
+
+
+###########################################
+def sig(x):
+     return 1/(1 + np.exp(-x))
 
 
 ###########################################

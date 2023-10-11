@@ -31,13 +31,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 from collections import defaultdict
 
-sys.path.append('./../../shtm')
-import helper
+from shtm import helper
  
 path_dict = {} 
 path_dict['data_root_path'] = 'data'
 path_dict['project_name'] = 'sequence_learning_performance' 
-path_dict['parameterspace_label'] = 'sequence_learning_and_prediction'
+path_dict['parameterspace_label'] = 'sequence_learning_and_prediction_1604'
+
+
+#TODO: use argparse with default values
+try: 
+    batch_id=int(sys.argv[1])
+    batch_array_id=int(sys.argv[2])
+    JOBMAX=int(sys.argv[3])
+    cP=batch_id*JOBMAX+batch_array_id
+except:
+    cP = 0
 
 # get parameters 
 PS, PS_path = helper.get_parameter_set(path_dict)
@@ -47,8 +56,17 @@ compute_overlap = True
 
 PL = helper.parameter_set_list(PS_sel)
 
+params = PL[cP]
+
+data = {}
+
+# get data path
+fname = 'prediction_performance'
+data_path = helper.get_data_path(params['data_path'], params['label'])
+print("\t\t data set %d/%d: %s/%s" % (cP + 1, len(PL), data_path, fname))
+
 # get training data
-sequences = helper.load_data(PS_path, 'training_data')
+sequences = helper.load_data(data_path, 'training_data')
 
 print("#### sequences used for training ### ")
 for i, sequence in enumerate(sequences): 
@@ -57,43 +75,35 @@ for i, sequence in enumerate(sequences):
         seq += str(char).ljust(2) 
     print("sequence %d: %s" % (i, seq))
 
-fname = 'prediction_performance'
-for cP, params in enumerate(PL):
+# load somatic spikes and dendritic current
+somatic_spikes = helper.load_numpy_spike_data(data_path, 'somatic_spikes')
+idend_eval = helper.load_numpy_spike_data(data_path, 'idend_eval')
 
-    data = {}
+# load record and excitation times 
+idend_recording_times = helper.load_data(data_path, 'idend_recording_times')
+characters_to_subpopulations = helper.load_data(data_path, 'characters_to_subpopulations')
+excitation_times = helper.load_data(data_path, 'excitation_times')
 
-    # get data path
-    data_path = helper.get_data_path(params['data_path'], params['label'])
-    print("\t\t data set %d/%d: %s/%s" % (cP + 1, len(PL), data_path, fname))
+# compute prediction performance
+errors, false_positives, false_negatives, num_active_neurons = helper.compute_prediction_performance(somatic_spikes, idend_eval, idend_recording_times, characters_to_subpopulations, sequences, params)
 
-    # load somatic spikes and dendritic current
-    somatic_spikes = helper.load_numpy_spike_data(data_path, 'somatic_spikes')
-    idend_eval = helper.load_numpy_spike_data(data_path, 'idend_eval')
+if compute_overlap:
+    # sequences overlap
+    sequences_overlap = helper.measure_sequences_overlap(sequences, somatic_spikes[:,1], somatic_spikes[:,0], excitation_times, params['fixed_somatic_delay'], params['learning_episodes'])
+    data['overlap'] = sequences_overlap
 
-    # load record and excitation times 
-    idend_recording_times = helper.load_data(data_path, 'idend_recording_times')
-    characters_to_subpopulations = helper.load_data(data_path, 'characters_to_subpopulations')
-    excitation_times = helper.load_data(data_path, 'excitation_times')
+data['error'] = errors
+data['false_positive'] = false_positives
+data['false_negative'] = false_negatives
+data['rel_active_neurons'] = num_active_neurons/params['n_E']
+data['ep_num'] = params['episodes_to_testing'] * np.arange(int(params['learning_episodes']/params['episodes_to_testing'])+1)
 
-    # compute prediction performance
-    errors, false_positives, false_negatives, num_active_neurons = helper.compute_prediction_performance(somatic_spikes, idend_eval, idend_recording_times, characters_to_subpopulations, sequences, params)
+ep_to_sol = np.where(errors < 0.01)[0] 
+if len(ep_to_sol) == 0:
+    print("number of episodes to convergence", params['learning_episodes'])
+else:    
+    print("number of episodes to convergence", data['ep_num'][ep_to_sol][0])
 
-    if compute_overlap:
-        # sequences overlap
-        sequences_overlap = helper.measure_sequences_overlap(sequences, somatic_spikes[:,1], somatic_spikes[:,0], excitation_times, params['fixed_somatic_delay'], params['learning_episodes'])
-        data['overlap'] = sequences_overlap
-
-    data['error'] = errors
-    data['false_positive'] = false_positives
-    data['false_negative'] = false_negatives
-    data['rel_active_neurons'] = num_active_neurons/params['n_E']
-    data['ep_num'] = params['episodes_to_testing'] * np.arange(int(params['learning_episodes']/params['episodes_to_testing'])+1)
-
-    ep_to_sol = np.where(errors < 0.01)[0] 
-    if len(ep_to_sol) == 0:
-        print("number of episodes to convergence", params['learning_episodes'])
-    else:    
-        print("number of episodes to convergence", data['ep_num'][ep_to_sol][0])
-
-    # save data
-    np.save("%s/%s" % (data_path, fname), data)
+# save data
+print("saved data to %s/%s" % (data_path, fname))
+np.save("%s/%s" % (data_path, fname), data)

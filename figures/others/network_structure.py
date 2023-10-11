@@ -3,7 +3,7 @@ from matplotlib import gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 
-from shtm.helper import load_data, load_spike_data
+from shtm.helper import load_data, load_spike_data, load_numpy_spike_data
 import utils
 
 def get_handle_lists(l):
@@ -30,7 +30,7 @@ PS, PS_path = utils.get_parameter_set(path_dict)
 # get data of the first seed (1st network realization)
 PS_sel = copy.deepcopy(PS)
 
-params = utils.parameter_set_list(PS_sel)[4]
+params = utils.parameter_set_list(PS_sel)[0]
 num_neurons = params['M'] * params['n_E']
 
 # get training data
@@ -53,7 +53,7 @@ connections_after_learning = load_data(data_path, 'ee_connections')
 characters_to_subpopulations = load_data(data_path, 'characters_to_subpopulations')
 
 # load spiking data
-somatic_spikes = load_spike_data(data_path, 'somatic_spikes')
+somatic_spikes = load_numpy_spike_data(data_path, 'somatic_spikes')
 
 # load excitation times
 excitation_times = load_data(data_path, 'excitation_times')
@@ -192,7 +192,7 @@ for conn in connections_after_learning:
 premature_connections = np.where((connection_matrix<th_mature_connections) & (connection_matrix>=0))
 mature_connections = np.where(connection_matrix>th_mature_connections)
 x_p = np.random.choice([False, True], len(premature_connections[0]), p=[c, 1-c])
-x_m = np.random.choice([False, True], len(mature_connections[0]), p=[c, 1-c])
+x_m = np.random.choice([False, True], len(mature_connections[0]), p=[0, 1])
 
 # plot premature connections, note that for clarity we plot only a small fraction of the connections not partcipating in the sequences (both mature and immature)
 p1 = plt.scatter(premature_connections[0][x_p], premature_connections[1][x_p], s=s, marker='o', color=pmat_color, label='immature connections')
@@ -254,6 +254,7 @@ handles[0].set_edgecolors([mat_color, color_seq[0], color_seq[1]])
 
 master_fname = 'connectivity_matrix'  
 plt.savefig('%s.pdf' % (master_fname))
+exit()
 
 ###########################################
 # combine matplotlib figure with inkscape 

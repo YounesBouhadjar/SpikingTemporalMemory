@@ -13,8 +13,8 @@ p['data_path']['project_name'] = 'sequence_learning_performance'
 p['data_path']['parameterspace_label'] = 'sequence_learning_and_prediction'
 
 # parameters for setting up the network  
-p['M'] = 12                   # number of subpopulations. Note that we use here 6 subpopulations rather than 14 (see Bouhadjar et al. 2022). This is just because we would like to accelerate the simulation, as the set of sequences in this specific experiment requires the use of only 6 subpopulations. We use M=14 in other experiments with more complex tasks such in the prediction performance experiments.
-p['n_E'] = 150               # number of excitatory neurons per subpopulation
+p['M'] = 16                  # number of subpopulations. Note that we use here 6 subpopulations rather than 14 (see Bouhadjar et al. 2022). This is just because we would like to accelerate the simulation, as the set of sequences in this specific experiment requires the use of only 6 subpopulations. We use M=14 in other experiments with more complex tasks such in the prediction performance experiments.
+p['n_E'] = 172 #300               # number of excitatory neurons per subpopulation
 p['n_I'] = 1                 # number of inhibitory neurons per subpopulation
 p['L'] = 1                   # number of subpopulations that represents one sequence element
 p['pattern_size'] = 20       # sparse set of active neurons per subpopulation
@@ -76,17 +76,17 @@ p['syn_dict_ee']['tau_perm'] = 18500.                # time constant of permanen
 p['syn_dict_ee']['tau_tr_pre'] = 20.                 # plasticity time constant (potentiation)
 p['syn_dict_ee']['tau_tr_post'] = 20. 
 p['syn_dict_ee']['receptor_type'] = 2                # receptor corresponding to the dendritic input
-p['syn_dict_ee']['lambda'] = 0.08                    # potentiation rate
-p['syn_dict_ee']['zt'] = 1.                          # target dAP trace
+p['syn_dict_ee']['lambda'] = 0.17                # potentiation rate
+p['syn_dict_ee']['zt'] = 1.28 #para.ParameterRange([2., 3., 4.]) #4.438                          # target dAP trace
 p['syn_dict_ee']['mu_plus'] = 0.                     # permanence dependence exponent, potentiation
-#p['syn_dict_ee']['mu_minus'] = 0.                    # permanence dependence exponent, depression
+# p['syn_dict_ee']['mu_minus'] = 0.                    # permanence dependence exponent, depression
 p['syn_dict_ee']['Wmax'] = 1.1 * p['soma_params']['theta_dAP'] / p['convergence']   # Maximum allowed weight
 p['syn_dict_ee']['Pmax'] = 20.                       # Maximum allowed permanence
 p['syn_dict_ee']['Pmin'] = 1.                        # Minimum allowed permanence
-p['syn_dict_ee']['lambda_minus'] = 0.0               # depression rate
+p['syn_dict_ee']['lambda_minus'] = 0.# 001344 #0.015             # depression rate
 p['syn_dict_ee']['dt_min'] = -4.                     # minimum time lag of the STDP window
 p['inh_factor'] = 7.
-#p['p_target'] = para.ParameterRange([600.,700.,800.])
+p['p_target'] = 0
 p['syn_dict_ee_synapse_model'] = p['syn_dict_ee']['synapse_model']
 
 # parameters of EX synapses (external to soma of E neurons)
@@ -128,38 +128,33 @@ p['DeltaT_cue'] = 80.                 # inter-cue interval during replay
 p['dt'] = 0.1                                  # simulation time resolution (ms)
 p['overwrite_files'] = True                    # if True, data will be overwritten,
                                                # if False, a NESTError is raised if the files already exist
-p['seed'] = para.ParameterRange([1, 3, 5])           # seed for NEST
+p['seed'] = para.ParameterRange([1])           # seed for NEST
 p['print_simulation_progress'] = False         # print the time progress.
-p['n_threads'] = 4                             # number of threads per MPI process 
+p['n_threads'] = 16                             # number of threads per MPI process 
 p['pad_time'] = 5.
 p['idend_recording_interval'] = 10 * p['dt']   # dendritic current recording resolution
 p['idend_record_time'] = 8.                    # time interval after the external stimulation at which the dendritic current is recorded
-p['evaluate_performance'] = True              # if turned on, we monitor the dendritic current at a certain time steps
+p['evaluate_performance'] = True               # if turned on, we monitor the dendritic current at a certain time steps
                                                # during the simulation. This then is used for the prediction performance assessment
 p['evaluate_replay'] = False                     
 p['record_idend_last_episode'] = True          # used for debugging, if turned on we record the dendritic current of all neurons
                                                # this can consume too much memory
-p['store_connections'] = True              
+p['store_training_data'] = True                                               
+p['store_connections'] = True
 p['load_connections'] = False
-p['label_conn'] = 'a5c5b38d2a1b2b3ab1238691a06d5c22'
-p['sparse_first_char'] = False                 # if turned on, the dAP of a subset of neurons in the subpopulation representing 
+p['sparse_first_char'] = True                  # if turned on, the dAP of a subset of neurons in the subpopulation representing 
                                                # first sequence elements is activated externally 
 p['active_weight_recorder'] = False            # if turned on, the weights are recorded every presynaptic spike
 
 # task parameters
 p['task'] = {}
-p['task']['task_name'] = 'hard_coded'          # name of the task
-p['task']['task_type'] = 5                     # this chooses between three hard coded sequence sets (see ./utils.py)
-p['task']['vocab_size'] = 12                   # vocabulary size
-p['task']['seed'] = 111                        # seed number
-p['task']['store_training_data'] = True        # if turned on, the sequence set is stored in directory defined in dict data_path
-if p['task']['task_name'] != 'hard_coded':
-    p['task']['num_sequences'] = 3             # number of sequences per sequence set
-    p['task']['num_sub_seq'] = 0               # if task_name == 'high_order', 
-                                               # it sets the number of sequences with same shared subsequence
-    p['task']['length_sequence'] = 4           # number of elements per sequence
-    p['task']['replace'] = False               # random choice of characters with replacement
+p['task']['vocabulary_size'] = 16                 # vocabulary size
+p['task']['S'] = 10                               # number of sequences
+p['task']['C'] = 10                               # sequence length
+p['task']['R'] = 2#5#para.ParameterRange(np.arange(2,5+1,1))                              # number of shared subsequences
+p['task']['O'] = 2#8#para.ParameterRange(np.arange(2,8+1,1))                              # length of shared subsequences ("order")
+p['task']['seed'] = 0                        # seed number
 
 # setup the training loop  
-p['learning_episodes'] = 20                     # total number of training episodes ('repetitions of the sequence sets')
-p['episodes_to_testing'] = 10                   # number of episodes after which we measure the prediction perfomance
+p['learning_episodes'] = 200                 # total number of training episodes ('repetitions of the sequence sets')
+p['episodes_to_testing'] = 100                # number of episodes after which we measure the prediction perfomance
