@@ -5,7 +5,6 @@ synapse stdsp_synapse:
     w real = 1.  @nest::weight
     p real = 1.
     t_last_pre_spike ms = -1ms
-  end
 
   parameters:
     d ms = 2.0 ms  @nest::delay # !!! cannot have a variable called "delay"
@@ -19,10 +18,8 @@ synapse stdsp_synapse:
     Pmax real = 20.
     Pmin real = 0.
     th_perm real = 10.
-    zt real = 1. pA
     dt_min ms = - 5. ms
     dt_max ms = - 50. ms
-  end
 
   equations:
     kernel pre_trace_kernel = exp(-t / tau_tr_pre)
@@ -33,15 +30,14 @@ synapse stdsp_synapse:
     inline post_trace real = convolve(post_trace_kernel, post_spikes)
 
     p' = (Pmin-p) / tau_perm
-  end
 
   input:
-    pre_spikes nS <- spike
-    post_spikes nS <- spike
+    pre_spikes <- spike
+    post_spikes <- spike
     z_post pA <- continuous
-  end
 
-  output: spike
+  output:
+    spike
 
   onReceive(post_spikes):
     delta_t ms = t_last_pre_spike - ( t + d )
@@ -53,8 +49,6 @@ synapse stdsp_synapse:
     elif delta_t > dt_min:
        p_ = p + Pmax * lambda * ( p / Pmax )**mu_plus * ( pre_trace - exp( delta_t / tau_tr_pre) )
        p = min(Pmax, p_)
-    end
-  end
 
   onReceive(pre_spikes):
     t_last_pre_spike = t
@@ -66,10 +60,7 @@ synapse stdsp_synapse:
       w = Wmax
     else:
       w = 0.
-    end
 
     # deliver spike to postsynaptic partner
     deliver_spike(w, d)
-  end
-end
 

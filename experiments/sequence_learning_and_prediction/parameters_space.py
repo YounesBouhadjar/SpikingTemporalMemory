@@ -14,7 +14,7 @@ p['data_path']['parameterspace_label'] = 'sequence_learning_and_prediction'
 
 # parameters for setting up the network  
 p['M'] = 16                  # number of subpopulations. Note that we use here 6 subpopulations rather than 14 (see Bouhadjar et al. 2022). This is just because we would like to accelerate the simulation, as the set of sequences in this specific experiment requires the use of only 6 subpopulations. We use M=14 in other experiments with more complex tasks such in the prediction performance experiments.
-p['n_E'] = 172 #300               # number of excitatory neurons per subpopulation
+p['n_E'] = 172 #300          # number of excitatory neurons per subpopulation
 p['n_I'] = 1                 # number of inhibitory neurons per subpopulation
 p['L'] = 1                   # number of subpopulations that represents one sequence element
 p['pattern_size'] = 20       # sparse set of active neurons per subpopulation
@@ -38,9 +38,9 @@ p['soma_params']['tau_syn1'] = 2.     # synaptic time constant: external input (
 p['soma_params']['tau_syn2'] = 5.     # synaptic time constant: dendrtic input (receptor 2)
 p['soma_params']['tau_syn3'] = 1.     # synaptic time constant: inhibitory input (receptor 3)
 # dendritic action potential
-p['soma_params']['I_p'] = 200. # current clamp value for I_dAP during a dendritic action potenti
-p['soma_params']['tau_dAP'] = 60.       # time window over which the dendritic current clamp is active
-p['soma_params']['theta_dAP'] = 59.        # current threshold for a dendritic action potential
+p['soma_params']['I_p'] = 200.        # current clamp value for I_dAP during a dendritic action potenti
+p['soma_params']['tau_dAP'] = 60.     # time window over which the dendritic current clamp is active
+p['soma_params']['theta_dAP'] = 59.   # current threshold for a dendritic action potential
 p['fixed_somatic_delay'] = 2          # this is an approximate time of how long it takes the soma to fire
                                       # upon receiving an external stimulus 
 
@@ -76,14 +76,13 @@ p['syn_dict_ee']['tau_perm'] = 18500.                # time constant of permanen
 p['syn_dict_ee']['tau_tr_pre'] = 20.                 # plasticity time constant (potentiation)
 p['syn_dict_ee']['tau_tr_post'] = 20. 
 p['syn_dict_ee']['receptor_type'] = 2                # receptor corresponding to the dendritic input
-p['syn_dict_ee']['lambda'] = 0.17                # potentiation rate
-p['syn_dict_ee']['zt'] = 1.28 #para.ParameterRange([2., 3., 4.]) #4.438                          # target dAP trace
+p['syn_dict_ee']['lambda'] = 0.17                    # potentiation rate
 p['syn_dict_ee']['mu_plus'] = 0.                     # permanence dependence exponent, potentiation
-# p['syn_dict_ee']['mu_minus'] = 0.                    # permanence dependence exponent, depression
+# p['syn_dict_ee']['mu_minus'] = 0.                  # permanence dependence exponent, depression
 p['syn_dict_ee']['Wmax'] = 1.1 * p['soma_params']['theta_dAP'] / p['convergence']   # Maximum allowed weight
 p['syn_dict_ee']['Pmax'] = 20.                       # Maximum allowed permanence
 p['syn_dict_ee']['Pmin'] = 1.                        # Minimum allowed permanence
-p['syn_dict_ee']['lambda_minus'] = 0.# 001344 #0.015             # depression rate
+p['syn_dict_ee']['lambda_minus'] = 0.                # depression rate
 p['syn_dict_ee']['dt_min'] = -4.                     # minimum time lag of the STDP window
 p['inh_factor'] = 7.
 p['p_target'] = 0
@@ -153,8 +152,8 @@ p['task']['S'] = 10                               # number of sequences
 p['task']['C'] = 10                               # sequence length
 p['task']['R'] = 2#5#para.ParameterRange(np.arange(2,5+1,1))                              # number of shared subsequences
 p['task']['O'] = 2#8#para.ParameterRange(np.arange(2,8+1,1))                              # length of shared subsequences ("order")
-p['task']['seed'] = 0                        # seed number
+p['task']['seed'] = 0                             # seed number
 
 # setup the training loop  
-p['learning_episodes'] = 200                 # total number of training episodes ('repetitions of the sequence sets')
+p['learning_episodes'] = 200                  # total number of training episodes ('repetitions of the sequence sets')
 p['episodes_to_testing'] = 100                # number of episodes after which we measure the prediction perfomance

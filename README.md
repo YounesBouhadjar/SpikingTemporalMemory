@@ -25,13 +25,10 @@ The code relies on a custom synapse and neuron model that you can get by install
 
 ## Preparing NEST installation
 
-1. Get the following NEST version [git repository](https://github.com/YounesBouhadjar/nest-simulator/tree/stdsp_synapse_v2) and checkout the correct branch:
+1. Get the NEST software [git repository](https://github.com/nest/nest-simulator):
    ```bash
-   git clone git@github.com:YounesBouhadjar/nest-simulator.git nest-shtm
-   cd nest-shtm
-   git checkout stdsp_synapse_v2
+   git clone git@github.com:nest/nest-simulator.git nest
    ```
-   the only difference between this NEST version and the master version is that it includes the new synapse model 'stdsp_synapse'
 
 2. Build NEST from the modified source: 
    
@@ -42,7 +39,7 @@ The code relies on a custom synapse and neuron model that you can get by install
      * these requirements should be already defined in `environment.yaml`
 
    * For your convenience we provide a script that builds the NEST code:
-     * copy `auto_build.sh` to the `nest-shtm` directory:
+     * copy `auto_build.sh` to the `nest` directory:
      ```bash
      cp ../auto_build.sh .
      ```
@@ -51,33 +48,32 @@ The code relies on a custom synapse and neuron model that you can get by install
      bash auto_build.sh
      ```
 
-     * executing this creates a build directory in `nest-shtm` under the name: `build/stdsp_synapse`
+     * executing this creates a build directory in `nest` under the name: `build`
    
    * source the `nest_vars.sh` script:
      ```bash
-     source ./build/stdsp_synapse/bin/nest_vars.sh
+     source ./build/bin/nest_vars.sh
      ```
  
-     * you could add `source <nest_dir>/nest-shtm/build/stdsp_synapse/bin/nest_vars.sh` to you `.bashrc`, 
+     * you could add `source <nest_dir>/nest/build/bin/nest_vars.sh` to you `.bashrc`, 
        this way the environment variables are set automatically whenever you open a new terminal
      * alternatively, you could add this to `env_vars.sh` in your conda environment:
      ```bash
      cd $CONDA_PREFIX
      mkdir -p ./etc/conda/activate.d
      touch ./etc/conda/activate.d/env_vars.sh
-     echo "source <nest_dir>/nest-shtm/build/stdsp_synapse/bin/nest_vars.sh" > ./etc/conda/activate.d/env_vars.sh
+     echo "source <nest_dir>/nest/build/stdsp_synapse/bin/nest_vars.sh" > ./etc/conda/activate.d/env_vars.sh
      ```
      :warning: don't forget to change <nest_dir>   
  
    * For more information look at the [NEST installation instructions](https://nest-simulator.readthedocs.io/en/stable/installation/index.html#advanced-install).
 
-3. Get the following NESTML version [git repository](https://github.com/YounesBouhadjar/nestml)
+3. Get the NESTML software [git repository](https://github.com/nest/nestml)
    ```bash
-   git clone git@github.com:YounesBouhadjar/nestml.git
+   git clone git@github.com:nest/nestml.git
    cd nestml
-   git checkout iaf_psc_exp_nonlineardendrite
    ```
-   This version of NESTML contains custom code for the neuron model defined in `nestml_models/iaf_psc_exp_nonlineardendrite.nestml`
+   NESTML is needed to compile the neuron model defined in `nestml_models/iaf_psc_exp_nonlineardendrite.nestml`
 4. Install NESTML: 
    ```bash     
    python setup.py install --user  
