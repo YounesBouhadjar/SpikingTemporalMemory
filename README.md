@@ -38,7 +38,7 @@ The code relies on a custom synapse and neuron model that you can get by install
    ```
    conda config --set auto_activate_base false
    ```
-   and re-launch a new terminal
+   and launch a new terminal
 
 2. Create a virtual environment with the necessary packages:
 
@@ -56,7 +56,7 @@ The code relies on a custom synapse and neuron model that you can get by install
    
 3. edit nest-config (according to [nestml doc](https://nestml.readthedocs.io/en/latest/installation.html#anaconda-installation))
 
-4. Build and install the custom neuron model using NESTML:
+4. Build and install the custom neuron and synapse models using NESTML:
    ```bash
     cd ../ 
     python compile_nestml_models.py
