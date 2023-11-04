@@ -45,14 +45,10 @@ The code relies on a custom synapse and neuron model that you can get by install
    ```
    mamba create --name ext_spiking-tm python==3.9
    mamba activate ext_spiking-tm
-   mamba install -c conda-forge nest-simulator ipython cxx-compiler
-   python -m pip install cmake pygsl nestml
+   mamba install -c conda-forge nest-simulator boost ipython cxx-compiler cmake gsl
+   pip install nestml
    ```
-
-   In some machines, you may need to install the boost package:
-   ```
-   mamba install -c conda-forge boost
-   ```
+   nestml may require pygsl, but notice version conflict between pygsl and gsl
    
 3. edit nest-config (according to [nestml doc](https://nestml.readthedocs.io/en/latest/installation.html#anaconda-installation))
 
