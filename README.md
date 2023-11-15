@@ -13,77 +13,46 @@ For questions or feedback please contact Younes Bouhadjar: y.bouhadjar@fz-juelic
 
 To meet the software requirements, create and activate the conda environment ```spiking-htm```:
 ```bash
-conda env create -f environment.yaml
-conda activate spiking-htm
+mamba env create -f environment.yaml #TODO outdated environment see below
+mamba activate ext_spiking-tm
 ```
 
 In addition, `pdflatex` needs to be available for the generation of some of the figures.
 
 # Reproducing simulation data
 
-The code relies on a custom synapse and neuron model that you can get by installing these specific NEST and NESTML versions:
+The code relies on a custom synapse and neuron model that you can get by installing these NEST and NESTML versions:
 
 ## Preparing NEST installation
 
-1. Get the following NEST version [git repository](https://github.com/YounesBouhadjar/nest-simulator/tree/stdsp_synapse_v2) and checkout the correct branch:
-   ```bash
-   git clone git@github.com:YounesBouhadjar/nest-simulator.git nest-shtm
-   cd nest-shtm
-   git checkout stdsp_synapse_v2
-   ```
-   the only difference between this NEST version and the master version is that it includes the new synapse model 'stdsp_synapse'
+1. Preferably, it is better to use `mamba` instead of `conda`, as it is much faster at dealing with large files.
 
-2. Build NEST from the modified source: 
+    * Install `mamba`:
+
+   ```
+   wget "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+   bash Miniforge3-$(uname)-$(uname -m).sh
+   ```
+
+   * in case you have been using conda, remove conda base
+   ```
+   conda config --set auto_activate_base false
+   ```
+   and launch a new terminal
+
+2. Create a virtual environment with the necessary packages:
+
+   ```
+   mamba create --name ext_spiking-tm python==3.9
+   mamba activate ext_spiking-tm
+   mamba install -c conda-forge nest-simulator boost ipython cxx-compiler cmake gsl
+   pip install nestml
+   ```
+   nestml may require pygsl, but notice version conflict between pygsl and gsl
    
-   * Make sure that the conda environment `spiking-htm` is activated
-   * Make sure that you have installed:
-     * Cython 0.28.3 or higher
-     * CMake 3.12 or higher
-     * these requirements should be already defined in `environment.yaml`
+3. edit nest-config (according to [nestml doc](https://nestml.readthedocs.io/en/latest/installation.html#anaconda-installation))
 
-   * For your convenience we provide a script that builds the NEST code:
-     * copy `auto_build.sh` to the `nest-shtm` directory:
-     ```bash
-     cp ../auto_build.sh .
-     ```
-     and then run
-     ```bash
-     bash auto_build.sh
-     ```
-
-     * executing this creates a build directory in `nest-shtm` under the name: `build/stdsp_synapse`
-   
-   * source the `nest_vars.sh` script:
-     ```bash
-     source ./build/stdsp_synapse/bin/nest_vars.sh
-     ```
- 
-     * you could add `source <nest_dir>/nest-shtm/build/stdsp_synapse/bin/nest_vars.sh` to you `.bashrc`, 
-       this way the environment variables are set automatically whenever you open a new terminal
-     * alternatively, you could add this to `env_vars.sh` in your conda environment:
-     ```bash
-     cd $CONDA_PREFIX
-     mkdir -p ./etc/conda/activate.d
-     touch ./etc/conda/activate.d/env_vars.sh
-     echo "source <nest_dir>/nest-shtm/build/stdsp_synapse/bin/nest_vars.sh" > ./etc/conda/activate.d/env_vars.sh
-     ```
-     :warning: don't forget to change <nest_dir>   
- 
-   * For more information look at the [NEST installation instructions](https://nest-simulator.readthedocs.io/en/stable/installation/index.html#advanced-install).
-
-3. Get the following NESTML version [git repository](https://github.com/YounesBouhadjar/nestml)
-   ```bash
-   git clone git@github.com:YounesBouhadjar/nestml.git
-   cd nestml
-   git checkout iaf_psc_exp_nonlineardendrite
-   ```
-   This version of NESTML contains custom code for the neuron model defined in `nestml_models/iaf_psc_exp_nonlineardendrite.nestml`
-4. Install NESTML: 
-   ```bash     
-   python setup.py install --user  
-   ```
-
-5. Build and install the custom neuron model using NESTML:
+4. Build and install the custom neuron and synapse models using NESTML:
    ```bash
     cd ../ 
     python compile_nestml_models.py

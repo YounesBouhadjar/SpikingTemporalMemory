@@ -63,11 +63,6 @@ def generate_reference_data():
     parser = create_parser()
     args, unparsed = parser.parse_known_args()
 
-    # ###########################################################
-    # import nestml module
-    # ===========================================================
-    nest.Install('../../module/nestml_active_dend_module')
-
     #############################################################
     # get network and training parameters 
     # ===========================================================
@@ -107,6 +102,18 @@ def generate_reference_data():
                    name = params['label'],
                    config = params
                   )
+    
+    # ###########################################################
+    # import nestml module
+    # ===========================================================
+    neuron_model = params['soma_model']
+    synapse_model = params['syn_dict_ee_synapse_model']
+    
+    nest.Install('../../module/nestml_' + neuron_model + '_module')
+    nest.Install('../../module/nestml_' + neuron_model + '_' + synapse_model + '_module')
+   
+    params['soma_model'] = neuron_model + '_nestml_' + '_with_' + synapse_model + '_nestml'
+    params['syn_dict_ee']['synapse_model'] = synapse_model + '_nestml_' + '_with_' + neuron_model + '_nestml'
 
     # start time 
     time_start = time.time()
@@ -269,8 +276,7 @@ def generate_reference_data():
     wandb.finish()
 
     print("\n### Plasticity parameters")
-    print("lambda plus: %0.4f" % params['syn_dict_ee']['lambda_plus'])
-    print("lambda homeostasis: %0.4f" % params['syn_dict_ee']['lambda_h'])
+    print("lambda: %0.4f" % params['syn_dict_ee']['lambda'])
     print("lambda minus: %0.4f" % model_instance.params['syn_dict_ee']['lambda_minus']) 
     print("excitation step %0.1fms" % params['DeltaT']) #30-50  
     print("seed number: %d" % params['seed']) 

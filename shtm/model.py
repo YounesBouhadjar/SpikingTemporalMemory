@@ -208,15 +208,8 @@ class Model:
         # the simulation time is set during the creation of the network  
         if nest.Rank() == 0:
             print('\nSimulating {} ms.'.format(self.sim_time))
-
-        evr = self.params['soma_params']['tau_h']
-        t = 0.
-        while t < (self.sim_time+evr):
-            self.__depression()
-            nest.Simulate(evr)
-            t += evr
     
-        #nest.Simulate(self.sim_time)
+        nest.Simulate(self.sim_time)
 
         # record somatic spikes
         times = nest.GetStatus(self.spike_recorder_soma)[0]['events']['times']
@@ -373,7 +366,7 @@ class Model:
 
         self.wr = nest.Create('weight_recorder')
         #self.params['syn_dict_ee']['weight_recorder'] = self.wr
-        nest.CopyModel('stdsp_synapse', 'stdsp_synapse_rec', {'weight_recorder': self.wr})
+        nest.CopyModel(self.params['syn_dict_ee']['synapse_model'], 'stdsp_synapse_rec', {'weight_recorder': self.wr})
         self.params['syn_dict_ee']['synapse_model'] = 'stdsp_synapse_rec'
 
     def __create_noise_sources(self):
@@ -479,6 +472,10 @@ class Model:
         """Connect excitatory neurons
         """
 
+        if 'delay' in self.params['syn_dict_ee'].keys():
+            nest.CopyModel(self.params['syn_dict_ee']['synapse_model'], 'stdsp_synapse_d', {'d': self.params['syn_dict_ee']['delay']})
+            self.params['syn_dict_ee']['synapse_model'] = 'stdsp_synapse_d'
+
         nest.Connect(self.exc_neurons, self.exc_neurons, conn_spec=self.params['conn_dict_ee'],
                      syn_spec=self.params['syn_dict_ee'])
 
@@ -581,9 +578,9 @@ class Model:
         print('\nSet min synaptic strength ...')
         connections = nest.GetConnections(synapse_model=self.params['syn_dict_ee']['synapse_model'])
  
-        syn_model = self.params['syn_dict_ee']['synapse_model']
-        if syn_model == 'stdsp_synapse' or syn_model == 'stdsp_synapse_rec':
-            connections.set({'Pmin': connections.permanence})
+        syn_model = self.params['syn_dict_ee_synapse_model']
+        if syn_model[:5] == 'stdsp':
+            connections.set({'Pmin': connections.p})
         else:
             connections.set({'Wmin': connections.weight})
 
@@ -599,8 +596,8 @@ class Model:
         print('\nSave connections ...')
         connections_all = nest.GetConnections(synapse_model=self.params['syn_dict_ee']['synapse_model'])
 
-        if self.params['syn_dict_ee']['synapse_model'] == 'stdsp_synapse':
-            connections = nest.GetStatus(connections_all, ['target', 'source', 'weight', 'permanence'])
+        if self.params['syn_dict_ee_synapse_model'][:5] == 'stdsp':
+            connections = nest.GetStatus(connections_all, ['target', 'source', 'weight', 'p'])
         else:
             connections = nest.GetStatus(connections_all, ['target', 'source', 'weight'])
 
@@ -624,7 +621,7 @@ class Model:
         conns_src = [int(conn[1]) for conn in conns]
         conns_weights = [conn[2] for conn in conns]
 
-        if self.params['syn_dict_ee']['synapse_model'] == 'stdsp_synapse':
+        if self.params['syn_dict_ee_synapse_model'][:5] == 'stdsp':
             conns_perms = [conn[3] for conn in conns]
 
         if self.params['evaluate_replay']:
@@ -636,18 +633,18 @@ class Model:
             syn_dict_ee = copy.deepcopy(self.params['syn_dict_ee'])
 
             del syn_dict_ee['synapse_model']
-            del syn_dict_ee['weight']
+            del syn_dict_ee['w']
             del syn_dict_ee['receptor_type']
             if self.params['syn_dict_ee']['synapse_model'] == 'stdsp_synapse':
                 del syn_dict_ee['permanence']
 
-            nest.SetDefaults('stdsp_synapse', syn_dict_ee)
+            nest.SetDefaults(self.params['syn_dict_ee']['synapse_model'], syn_dict_ee)
 
-            if self.params['syn_dict_ee']['synapse_model'] == 'stdsp_synapse':
-                syn_dict = {'synapse_model': 'stdsp_synapse',
+            if self.params['syn_dict_ee_synapse_model'][:5] == 'stdsp':
+                syn_dict = {'synapse_model': self.params['syn_dict_ee']['synapse_model'],
                             'receptor_type': 2,
                             'weight': conns_weights,
-                            'permanence': conns_perms}
+                            'p': conns_perms}
             else:
                 syn_dict = {'synapse_model': 'stdsp_synapse',
                             'receptor_type': 2,
@@ -695,19 +692,6 @@ class Model:
             per_norm = per_dep * sig(self.params['lr']-s) #/ y
 
             nest.SetStatus(conn, 'permanence', per_norm)
-
-    def __depression(self): 
-        """Normalizes weights of incoming synapses
-        """
- 
-        for i, neuron in enumerate(self.exc_neurons):
-
-            conn = nest.GetConnections(target=neuron, synapse_model='stdsp_synapse')
-            per = np.array(conn.permanence)
-            per_dep = per - self.params['w_dep']
-
-            nest.SetStatus(conn, 'permanence', per_dep)
-
 
 ##############################################
 def get_parameters():

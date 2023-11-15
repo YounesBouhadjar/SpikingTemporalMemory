@@ -153,6 +153,8 @@ def generate_sequences(params, data_path, fname):
             sequences = [['B', 'D', 'I', 'C', 'H'], ['E', 'D', 'I', 'C', 'F'], ['F', 'B', 'C', 'A', 'H'], ['G', 'B', 'C', 'A', 'D'], ['E', 'C', 'I', 'H', 'A'], ['D', 'C', 'I', 'H', 'G']]
         elif task_type == 4:
             sequences = [['A', 'D', 'B', 'G', 'H', 'E'], ['F', 'D', 'B', 'G', 'H', 'C']]
+        elif task_type == 5:
+            sequences = [['A', 'B', 'C', 'D'], ['E', 'F', 'G', 'H'], ['I', 'J', 'K', 'L']]
         else:
             sequences = [['A', 'D', 'B', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N','E'], ['F', 'D', 'B', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'C']]
 
@@ -215,8 +217,9 @@ def derived_parameters(params):
 
     # set initial weights (or permanences in the case of the structural synapse)
     import nest
-    if params['syn_dict_ee']['synapse_model'] == 'stdsp_synapse':
-        params['syn_dict_ee']['permanence'] = nest.random.uniform(min=params['p_min'], max=params['p_max']) 
+
+    if params['syn_dict_ee_synapse_model'][:5] == 'stdsp':
+        params['syn_dict_ee']['p'] = nest.random.uniform(min=params['p_min'], max=params['p_max']) 
     else:
         params['syn_dict_ee']['weight'] = nest.random.uniform(min=params['w_min'], max=params['w_max'])
  

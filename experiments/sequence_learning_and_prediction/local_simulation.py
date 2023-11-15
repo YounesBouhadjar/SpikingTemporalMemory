@@ -39,4 +39,4 @@ if simulation_script == "training.py":
 N = len(PL)
 
 os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
-Parallel(n_jobs=2)(delayed(sim)(i) for i in range(N))
+Parallel(n_jobs=1)(delayed(sim)(i) for i in range(N))

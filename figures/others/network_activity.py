@@ -2,8 +2,10 @@ import copy
 from matplotlib import gridspec
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
-from shtm.helper import load_data, load_spike_data
+sys.path.append('./../shtm')
+from helper import load_data, load_numpy_spike_data, load_spike_data
 import utils
 
 # retrieve network parameters 
@@ -34,11 +36,13 @@ for i, sequence in enumerate(sequences):
 data_path = utils.get_data_path(params['data_path'], params['label'])
 
 # load spikes
-somatic_spikes = load_spike_data(data_path, 'somatic_spikes')
-idend = load_spike_data(data_path, 'idend_last_episode')
+somatic_spikes = load_numpy_spike_data(data_path, 'somatic_spikes')
+inh_spikes = load_numpy_spike_data(data_path, 'inh_spikes')
+idend = load_numpy_spike_data(data_path, 'idend_last_episode')
 
 # load spike recordings
-idend_recording_times = load_data(data_path, 'idend_recording_times')
+if params['evaluate_performance']:
+    idend_recording_times = load_data(data_path, 'idend_recording_times')
 characters_to_subpopulations = load_data(data_path, 'characters_to_subpopulations')
 characters_to_time_excitation = load_data(data_path, 'excitation_times_soma')
 
@@ -51,6 +55,16 @@ dendriticAP_currents = idend[:, 2][idx]
 dendriticAP_times = idend[:, 1][idx]
 dendriticAP_senders = idend[:, 0][idx]
 
+
+start_time = characters_to_time_excitation[sequences[0][0]][-1] - params['pad_time']
+end_time = characters_to_time_excitation[sequences[-1][-1]][-1] + params['pad_time']
+print(start_time, end_time)
+plt.rcParams["figure.figsize"] = (15,10)
+plt.rcParams["font.size"] = 20
+utils.plot_spikes(somatic_spikes, inh_spikes, idend, start_time, end_time, params['soma_params']['theta_dAP'], 150, 12)
+plt.savefig("network_activity_last_episode.png")
+
+sys.exit()
 # organize the characters for plotting purpose
 subpopulation_indices = []
 chars_per_subpopulation = []
