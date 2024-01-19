@@ -21,13 +21,13 @@ with open('../config.yaml', 'r') as cfgfile:
     email = params_config['email']
     path = params_config['path']
 
-PS = pars.p
+PS = __import__(params_script.split(".")[0]).p
 
 PL=helper.parameter_set_list(PS)
 params = PL[0]
 
 # save parameters.py  
-helper.copy_scripts(PS['data_path'], "parameters_space.py")
+helper.copy_scripts(PS['data_path'], params_script)
 
 ## write (temporary) submission script
 N = len(PL)   ## size of this batch
@@ -40,7 +40,7 @@ for batch_id in range(int(np.ceil(1.*N/JOBMAX))):
 
     batch_end = min((batch_id+1)*JOBMAX, N)         # id of parameter set corresponding to end of this batch
     batch_size = batch_end - batch_id*JOBMAX        # size of this batch
-    submission_script="%s_%d.sh" % (params['data_path']['parameterspace_label'],batch_id)
+    submission_script="%s_%d.sh" % (params['data_path']['parameterspace_label'], batch_id)
 
     file = open(submission_script, 'w')
     file.write('#!/bin/bash\n')
