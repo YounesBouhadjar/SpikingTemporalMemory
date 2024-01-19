@@ -36,7 +36,7 @@ from shtm import helper
 path_dict = {} 
 path_dict['data_root_path'] = 'data'
 path_dict['project_name'] = 'sequence_learning_performance' 
-path_dict['parameterspace_label'] = 'sequence_learning_and_prediction_1604'
+path_dict['parameterspace_label'] = 'sequence_learning_and_prediction_task_complexity'
 
 
 #TODO: use argparse with default values
@@ -85,11 +85,21 @@ characters_to_subpopulations = helper.load_data(data_path, 'characters_to_subpop
 excitation_times = helper.load_data(data_path, 'excitation_times')
 
 # compute prediction performance
-errors, false_positives, false_negatives, num_active_neurons = helper.compute_prediction_performance(somatic_spikes, idend_eval, idend_recording_times, characters_to_subpopulations, sequences, params)
+errors, false_positives, false_negatives, num_active_neurons = helper.compute_prediction_performance(somatic_spikes,
+                                                                                                     idend_eval,
+                                                                                                     idend_recording_times,
+                                                                                                     characters_to_subpopulations,
+                                                                                                     sequences,
+                                                                                                     params)
 
 if compute_overlap:
     # sequences overlap
-    sequences_overlap = helper.measure_sequences_overlap(sequences, somatic_spikes[:,1], somatic_spikes[:,0], excitation_times, params['fixed_somatic_delay'], params['learning_episodes'])
+    sequences_overlap = helper.measure_sequences_overlap(sequences,
+                                                         somatic_spikes[:,1],
+                                                         somatic_spikes[:,0],
+                                                         excitation_times,
+                                                         params['fixed_somatic_delay'],
+                                                         params['learning_episodes'])
     data['overlap'] = sequences_overlap
 
 data['error'] = errors

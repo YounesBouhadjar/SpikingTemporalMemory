@@ -324,7 +324,7 @@ def example():
     vocabulary_size = 26        ## vocabulary size (may be overwritten if redraw==False)
     S=10                        ## number of sequences
     C=10                         ## sequence length
-    R=10                         ## number of shared subsequences
+    R=5                         ## number of shared subsequences
     O=8                         ## length of shared subsequences ("order")
     minimal_prefix_length = 1   ## minimal prefix length
     minimal_postfix_length = 1  ## minimal postfix length
@@ -334,7 +334,8 @@ def example():
     
     ####################    
     
-    seq_set, shared_seq_set, vocabulary = generate_sequences(S, C, R, O, vocabulary_size, minimal_prefix_length, minimal_postfix_length, seed, redraw)
+    seq_set, shared_seq_set, vocabulary = generate_sequences(S, C, R, O,
+            vocabulary_size, minimal_prefix_length, minimal_postfix_length, seed, redraw)
 
     print_sequences(seq_set,shared_seq_set,vocabulary,label=' (int)')
     

@@ -112,6 +112,7 @@ class Model:
         self.params['soma_params']['tau_h'] = self.__get_time_constant_dendritic_rate(
             calibration=self.params['calibration'])
 
+
     def __setup_nest(self):
         """Initializes the NEST kernel.
         """
@@ -208,7 +209,7 @@ class Model:
         # the simulation time is set during the creation of the network  
         if nest.Rank() == 0:
             print('\nSimulating {} ms.'.format(self.sim_time))
-    
+   
         nest.Simulate(self.sim_time)
 
         # record somatic spikes

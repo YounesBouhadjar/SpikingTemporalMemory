@@ -10,11 +10,11 @@ p = para.ParameterSpace({})
 p['data_path'] = {}
 p['data_path']['data_root_path'] = 'data'
 p['data_path']['project_name'] = 'sequence_learning_performance'
-p['data_path']['parameterspace_label'] = 'sequence_learning_and_prediction'
+p['data_path']['parameterspace_label'] = 'sequence_learning_and_prediction_task_complexity_1'
 
 # parameters for setting up the network  
 p['M'] = 16                  # number of subpopulations. Note that we use here 6 subpopulations rather than 14 (see Bouhadjar et al. 2022). This is just because we would like to accelerate the simulation, as the set of sequences in this specific experiment requires the use of only 6 subpopulations. We use M=14 in other experiments with more complex tasks such in the prediction performance experiments.
-p['n_E'] = 172 #300          # number of excitatory neurons per subpopulation
+p['n_E'] = 166 #300          # number of excitatory neurons per subpopulation
 p['n_I'] = 1                 # number of inhibitory neurons per subpopulation
 p['L'] = 1                   # number of subpopulations that represents one sequence element
 p['pattern_size'] = 20       # sparse set of active neurons per subpopulation
@@ -72,17 +72,17 @@ p['syn_dict_ee']['weight'] = 0.                      # synaptic weight
 p['syn_dict_ee']['delay'] = 2.0
 p['syn_dict_ee']['synapse_model'] = 'stdsp_synapse'  # synapse model
 p['syn_dict_ee']['th_perm'] = 10.                    # synapse maturity threshold
-p['syn_dict_ee']['tau_perm'] = 18500.                # time constant of permanence leakage
+p['syn_dict_ee']['tau_perm'] = 75558. #30000. #18500.                # time constant of permanence leakage
 p['syn_dict_ee']['tau_tr_pre'] = 20.                 # plasticity time constant (potentiation)
 p['syn_dict_ee']['tau_tr_post'] = 20. 
 p['syn_dict_ee']['receptor_type'] = 2                # receptor corresponding to the dendritic input
-p['syn_dict_ee']['lambda'] = 0.17                    # potentiation rate
+p['syn_dict_ee']['lambda'] = 0.2616                    # potentiation rate
 p['syn_dict_ee']['mu_plus'] = 0.                     # permanence dependence exponent, potentiation
 # p['syn_dict_ee']['mu_minus'] = 0.                  # permanence dependence exponent, depression
 p['syn_dict_ee']['Wmax'] = 1.1 * p['soma_params']['theta_dAP'] / p['convergence']   # Maximum allowed weight
 p['syn_dict_ee']['Pmax'] = 20.                       # Maximum allowed permanence
 p['syn_dict_ee']['Pmin'] = 1.                        # Minimum allowed permanence
-p['syn_dict_ee']['lambda_minus'] = 0.                # depression rate
+p['syn_dict_ee']['lambda_minus'] = 9.63e-05          # depression rate
 p['syn_dict_ee']['dt_min'] = -4.                     # minimum time lag of the STDP window
 p['inh_factor'] = 7.
 p['p_target'] = 0
@@ -150,10 +150,10 @@ p['task'] = {}
 p['task']['vocabulary_size'] = 16                 # vocabulary size
 p['task']['S'] = 10                               # number of sequences
 p['task']['C'] = 10                               # sequence length
-p['task']['R'] = 2#5#para.ParameterRange(np.arange(2,5+1,1))                              # number of shared subsequences
-p['task']['O'] = 2#8#para.ParameterRange(np.arange(2,8+1,1))                              # length of shared subsequences ("order")
+p['task']['R'] = para.ParameterRange(np.arange(2,5+2,2))                              # number of shared subsequences
+p['task']['O'] = para.ParameterRange(np.arange(2,8+2,2))                              # length of shared subsequences ("order")
 p['task']['seed'] = 0                             # seed number
 
 # setup the training loop  
-p['learning_episodes'] = 200                  # total number of training episodes ('repetitions of the sequence sets')
+p['learning_episodes'] = 300                  # total number of training episodes ('repetitions of the sequence sets')
 p['episodes_to_testing'] = 100                # number of episodes after which we measure the prediction perfomance
