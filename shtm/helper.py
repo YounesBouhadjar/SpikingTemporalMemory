@@ -244,10 +244,10 @@ def derived_parameters(params):
     # maximum time lag for the STDP window 
     if params['add_bkgd_noise']:
         # similar results can be obtained using -2.*params['DeltaT'] or -1.2*params['DeltaT']
-        params['syn_dict_ee']['dt_max'] = -2.*params['DeltaT'] 
-        #params['syn_dict_ee']['dt_max'] = -1.2*params['DeltaT']          
+        params['syn_dict_ee']['dt_max'] = 2.*params['DeltaT'] 
+        #params['syn_dict_ee']['dt_max'] = 1.2*params['DeltaT']          
     else:
-        params['syn_dict_ee']['dt_max'] = -2.*params['DeltaT']          
+        params['syn_dict_ee']['dt_max'] = 2.*params['DeltaT']          
 
     print('\n#### postsynaptic potential ####')
     print('PSP maximum J_EX psp:  %f mV' % params['J_EX_psp'])

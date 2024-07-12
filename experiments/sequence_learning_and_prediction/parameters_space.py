@@ -24,7 +24,7 @@ p['rule'] = 'fixed_indegree'
 p['connection_prob'] = 0.2
 
 # neuron parameters of the excitatory neurons
-p['soma_model'] = 'iaf_psc_exp_nonlineardendrite'
+p['soma_model'] = 'iaf_psc_exp_nonlineardendrite_neuron'
 p['soma_params'] = {}
 p['soma_params']['C_m'] = 250.        # membrane capacitance (pF)
 p['soma_params']['E_L'] = 0.          # resting membrane potential (mV)
@@ -83,7 +83,7 @@ p['syn_dict_ee']['Wmax'] = 1.1 * p['soma_params']['theta_dAP'] / p['convergence'
 p['syn_dict_ee']['Pmax'] = 20.                       # Maximum allowed permanence
 p['syn_dict_ee']['Pmin'] = 1.                        # Minimum allowed permanence
 p['syn_dict_ee']['lambda_minus'] = 9.63e-05          # depression rate
-p['syn_dict_ee']['dt_min'] = -4.                     # minimum time lag of the STDP window
+p['syn_dict_ee']['dt_min'] = 4.                     # minimum time lag of the STDP window
 p['inh_factor'] = 7.
 p['p_target'] = 0
 p['syn_dict_ee_synapse_model'] = p['syn_dict_ee']['synapse_model']

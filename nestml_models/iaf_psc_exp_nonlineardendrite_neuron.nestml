@@ -1,4 +1,4 @@
-neuron iaf_psc_exp_nonlineardendrite:
+model iaf_psc_exp_nonlineardendrite_neuron:
 
   state:
     V_m mV = 0mV     # membrane potential in mV
