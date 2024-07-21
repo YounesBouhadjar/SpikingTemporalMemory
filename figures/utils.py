@@ -646,8 +646,9 @@ def get_data_path(pars, ps_label='', add_to_path=''):
     try:
         home = pars['home']
     except:
-        home = '..'
+        #home = '..'
         #home = Path.home()
+        home = '/work/users/bouhadjar'
 
     data_path = Path(home, pars["data_root_path"],
                      pars["project_name"],
@@ -703,13 +704,14 @@ def matrix_prediction_performance(parameter_key_list, data_address, sequences=[]
     data = {}
     data["error"] = np.zeros([len(parameters[pk]) for pk in parameter_key_list] + [1], dtype=np.float64)
     data["time_to_solution"] = np.zeros([len(parameters[pk]) for pk in parameter_key_list] + [1], dtype=np.float64)
+    # data["overlap"] = np.zeros([len(parameters[pk]) for pk in parameter_key_list] + [1], dtype=np.float64)
 
     for cp, params in enumerate(PL):
 
         data_path = get_data_path(params['data_path'], params['label'], add_to_path)
 
         print("\t\t data set %d/%d: %s/%s" % (cp + 1, len(PL), data_path, fname))
-        print("\n lambda_plus: %0.3f, lambda_h: %0.3f, seed: %d" % (params["syn_dict_ee"]["lambda_plus"], params["syn_dict_ee"]["lambda_h"], params["seed"]))
+        #print("\n lambda_plus: %0.3f, lambda_h: %0.3f, seed: %d" % (params["syn_dict_ee"]["lambda_plus"], params["syn_dict_ee"]["lambda_h"], params["seed"]))
         print("\n")
 
         # construct index vector
@@ -721,6 +723,7 @@ def matrix_prediction_performance(parameter_key_list, data_address, sequences=[]
         pred = load_data(data_path, 'prediction_performance')
 
         error = pred['error']
+        # overlap = pred['overlap']
 
         time_to_solution = np.where(error < 0.001)[0]
         try:
@@ -728,8 +731,9 @@ def matrix_prediction_performance(parameter_key_list, data_address, sequences=[]
         except:
             initial_time_to_solution = params['learning_episodes']
 
-        data["error"][tuple(ind)] = error[-1]
-        data["time_to_solution"][tuple(ind)] = initial_time_to_solution
+        data['error'][tuple(ind)] = error[-1]
+        data['time_to_solution'][tuple(ind)] = initial_time_to_solution
+        # data['overlap'][tuple(ind)] = np.mean(overlap[-1])
     
     return data, P
 
