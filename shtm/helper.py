@@ -202,10 +202,11 @@ def derived_parameters(params):
     # compute psc max from the psp max
     params['J_IE_psp'] = 1.2 * params['inhibit_params']['V_th']         # inhibitory PSP as a response to an input from E neuron
 
-    if params['evaluate_replay']:
-        params['J_IE_psp'] /= params['n_E']
-    else:
-        params['J_IE_psp'] /= params['pattern_size']
+    #if params['evaluate_replay']:
+    #    params['J_IE_psp'] /= params['n_E']
+    #else:
+    #    params['J_IE_psp'] /= params['pattern_size']
+    params['J_IE_psp'] /= params['pattern_size']
 
     params['syn_dict_ex']['weight'] = psp_max_2_psc_max(params['J_EX_psp'], params['soma_params']['tau_m'],
                                                    params['soma_params']['tau_syn1'], params['R_m_soma'])
@@ -330,8 +331,9 @@ def get_data_path(pars, ps_label='', add_to_path=''):
     try:
         home = pars['home']
     except:
-        home = '../..'
+        #home = '../..'
         #home = Path.home()
+        home = '/work/users/bouhadjar'
 
     data_path = Path(home, pars['data_root_path'],
                      pars['project_name'],

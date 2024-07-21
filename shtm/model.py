@@ -224,26 +224,27 @@ class Model:
         #x = helper.load_numpy_spike_data(self.data_path, fname)
 
         # record dendritic currents corresponding to last elements in sequences
-        times = []
-        senders = []
-        I_dends = []
-        for i in range(self.num_sequences):
-            sender = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['senders']
-            time = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['times']
-            I_dend = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['I_dend']
+        if not(self.params['evaluate_replay']):
+            times = []
+            senders = []
+            I_dends = []
+            for i in range(self.num_sequences):
+                sender = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['senders']
+                time = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['times']
+                I_dend = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['I_dend']
 
-            senders.append(sender)
-            times.append(time)
-            I_dends.append(I_dend)
+                senders.append(sender)
+                times.append(time)
+                I_dends.append(I_dend)
 
-        senders = np.concatenate(senders)
-        times = np.concatenate(times)
-        I_dends = np.concatenate(I_dends)
-        data = np.array([senders, times, I_dends]).T
+            senders = np.concatenate(senders)
+            times = np.concatenate(times)
+            I_dends = np.concatenate(I_dends)
+            data = np.array([senders, times, I_dends]).T
                 
-        fname = 'idend_eval'
-        print("save data to %s/%s ..." % (self.data_path, fname))
-        np.save('%s/%s' % (self.data_path, fname), data)
+            fname = 'idend_eval'
+            print("save data to %s/%s ..." % (self.data_path, fname))
+            np.save('%s/%s' % (self.data_path, fname), data)
 
         # record dendritic currents of last episode
         if self.params['record_idend_last_episode']:
@@ -320,8 +321,7 @@ class Model:
         if self.params['evaluate_performance']:
 
             self.multimeter_idend_eval = nest.Create('multimeter', self.num_sequences,
-                                                     params={'record_from': ['I_dend']}
-                                                     )
+                                                     params={'record_from': ['I_dend']})
             for i in range(self.num_sequences):
                 idend_eval_spec_dict = {'offset': idend_recording_times[i][0] + self.params['idend_record_time'],
                                         'interval': idend_recording_times[i][1] - idend_recording_times[i][0]}

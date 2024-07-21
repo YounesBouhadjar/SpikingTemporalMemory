@@ -72,17 +72,17 @@ p['syn_dict_ee']['weight'] = 0.                      # synaptic weight
 p['syn_dict_ee']['delay'] = 2.0
 p['syn_dict_ee']['synapse_model'] = 'stdsp_synapse'  # synapse model
 p['syn_dict_ee']['th_perm'] = 10.                    # synapse maturity threshold
-p['syn_dict_ee']['tau_perm'] = 75558. #30000. #18500.                # time constant of permanence leakage
+p['syn_dict_ee']['tau_perm'] = 50000. #75558. #18500.                # time constant of permanence leakage
 p['syn_dict_ee']['tau_tr_pre'] = 20.                 # plasticity time constant (potentiation)
 p['syn_dict_ee']['tau_tr_post'] = 20. 
 p['syn_dict_ee']['receptor_type'] = 2                # receptor corresponding to the dendritic input
-p['syn_dict_ee']['lambda'] = 0.2616                    # potentiation rate
+p['syn_dict_ee']['lambda'] = 0.25 #616                    # potentiation rate
 p['syn_dict_ee']['mu_plus'] = 0.                     # permanence dependence exponent, potentiation
 # p['syn_dict_ee']['mu_minus'] = 0.                  # permanence dependence exponent, depression
 p['syn_dict_ee']['Wmax'] = 1.1 * p['soma_params']['theta_dAP'] / p['convergence']   # Maximum allowed weight
 p['syn_dict_ee']['Pmax'] = 20.                       # Maximum allowed permanence
 p['syn_dict_ee']['Pmin'] = 1.                        # Minimum allowed permanence
-p['syn_dict_ee']['lambda_minus'] = 9.63e-05          # depression rate
+p['syn_dict_ee']['lambda_minus'] = 0.0001 #9.63e-05          # depression rate
 p['syn_dict_ee']['dt_min'] = -4.                     # minimum time lag of the STDP window
 p['inh_factor'] = 7.
 p['p_target'] = 0
@@ -127,7 +127,7 @@ p['DeltaT_cue'] = 80.                 # inter-cue interval during replay
 p['dt'] = 0.1                                  # simulation time resolution (ms)
 p['overwrite_files'] = True                    # if True, data will be overwritten,
                                                # if False, a NESTError is raised if the files already exist
-p['seed'] = para.ParameterRange([1])           # seed for NEST
+p['seed'] = para.ParameterRange([1,2,3])           # seed for NEST
 p['print_simulation_progress'] = False         # print the time progress.
 p['n_threads'] = 16                             # number of threads per MPI process 
 p['pad_time'] = 5.
@@ -148,12 +148,12 @@ p['active_weight_recorder'] = False            # if turned on, the weights are r
 # task parameters
 p['task'] = {}
 p['task']['vocabulary_size'] = 16                 # vocabulary size
-p['task']['S'] = 10                               # number of sequences
-p['task']['C'] = 10                               # sequence length
-p['task']['R'] = para.ParameterRange(np.arange(2,5+2,2))                              # number of shared subsequences
-p['task']['O'] = para.ParameterRange(np.arange(2,8+2,2))                              # length of shared subsequences ("order")
+p['task']['S'] = 8                               # number of sequences
+p['task']['C'] = 8                               # sequence length
+p['task']['R'] = 6#para.ParameterRange(np.arange(2,6+2,2))                              # number of shared subsequences
+p['task']['O'] = 4#para.ParameterRange(np.arange(2,8+2,2))                              # length of shared subsequences ("order")
 p['task']['seed'] = 0                             # seed number
 
 # setup the training loop  
-p['learning_episodes'] = 300                  # total number of training episodes ('repetitions of the sequence sets')
+p['learning_episodes'] = 400                  # total number of training episodes ('repetitions of the sequence sets')
 p['episodes_to_testing'] = 100                # number of episodes after which we measure the prediction perfomance

@@ -58,7 +58,7 @@ def create_parser():
     return parser_
 
 
-def generate_reference_data():
+def generate_reference_data(arr_id=None):
 
     parser = create_parser()
     args, unparsed = parser.parse_known_args()
@@ -77,7 +77,10 @@ def generate_reference_data():
     JOBMAX = args.jobmax
     array_id=batch_id*JOBMAX+batch_array_id
 
-    params = PL[array_id]
+    if arr_id is not None:
+        params = PL[arr_id]
+    else:
+        params = PL[array_id]
 
     if args.run_hwb:
         wandb.init(mode=args.wb_mode,
@@ -87,14 +90,15 @@ def generate_reference_data():
 
         # TODO: alternatively these could be added to args (see above)
         #params['syn_dict_ee']['lambda_h'] = wandb.config['lambda_h']
-        #params['syn_dict_ee']['lambda_minus'] =  wandb.config['lambda_minus']
-        #params['syn_dict_ee']['lambda_plus'] =  wandb.config['lambda_plus']
-        #params['w_dep'] =  wandb.config['w_dep']
-        #params['n_E'] =  wandb.config['n_E']
-        params['task']['R'] = wandb.config['R']                                 # number of shared subsequences
-        params['task']['O'] = wandb.config['O']                                 # length of shared subsequences ("order")
+        params['syn_dict_ee']['tau_perm'] = wandb.config['tau_perm']
+        params['syn_dict_ee']['lambda_minus'] = wandb.config['lambda_minus']
+        params['syn_dict_ee']['lambda'] = wandb.config['lambda']
+        params['task']['S'] = wandb.config['S']
+        params['task']['C'] = wandb.config['C']
+        params['task']['R'] = wandb.config['R']
+        params['task']['O'] = wandb.config['O']
+
         params['label'] = hashlib.md5(pformat(dict(params)).encode('utf-8')).hexdigest()
-        #params['syn_dict_ee']['zt'] = wandb.config['zt']
 
     else:
         wandb.init(mode=args.wb_mode,
@@ -108,10 +112,13 @@ def generate_reference_data():
     # ===========================================================
     neuron_model = params['soma_model']
     synapse_model = params['syn_dict_ee_synapse_model']
-    
-    nest.Install('../../module/nestml_' + neuron_model + '_module')
-    nest.Install('../../module/nestml_' + neuron_model + '_' + synapse_model + '_module')
    
+    try:
+        nest.Install('../../module/nestml_' + neuron_model + '_module')
+        nest.Install('../../module/nestml_' + neuron_model + '_' + synapse_model + '_module')
+    except:
+        pass
+
     params['soma_model'] = neuron_model + '_nestml_' + '_with_' + synapse_model + '_nestml'
     params['syn_dict_ee']['synapse_model'] = synapse_model + '_nestml_' + '_with_' + neuron_model + '_nestml'
 
@@ -124,12 +131,21 @@ def generate_reference_data():
     vocabulary_size = params['task']['vocabulary_size']          # vocabulary size (may be overwritten if redraw==False)
     R = int(params['task']['R'])                                 # number of shared subsequences
     O = int(params['task']['O'])                                 # length of shared subsequences ("order")
-    if R != 0:
-        S = int(2*R)                                             # number of sequences
-        C = int(O+2)                                             # sequence length
-    else:
-        S = int(params['task']['S'])                             # number of sequences
-        C = int(params['task']['C'])                             # sequence length
+#    if R != 0:
+#        S = int(2*R)                                             # number of sequences
+#        C = int(O+2)                                             # sequence length
+#    else:
+    S = int(params['task']['S'])                             # number of sequences
+    C = int(params['task']['C'])                             # sequence length
+
+    if R > (S - 2) or O > (C - 2):
+
+        wandb.log({"loss": -1,
+                   "fp": -1,
+                   "fn": -1})
+
+        exit()
+
     minimal_prefix_length = 1   # minimal prefix length
     minimal_postfix_length = 1  # minimal postfix length
     redraw = True              # if redraw == True: pre- and postfixes may contain repeating elements 
@@ -270,7 +286,11 @@ def generate_reference_data():
 
         print("False negative counts", count_false_negatives)   
 
-        wandb.log({"loss": seq_avg_errors[-1], "fp": seq_avg_false_positives[-1], "fn": seq_avg_false_negatives[-1]})
+        wandb.log({"loss"+str(arr_id): seq_avg_errors[-1],
+                   "fp"+str(arr_id): seq_avg_false_positives[-1],
+                   "fn"+str(arr_id): seq_avg_false_negatives[-1]})
+
+        return seq_avg_errors[-1], seq_avg_false_positives[-1], seq_avg_false_negatives[-1]
 
 
     wandb.finish()
@@ -283,4 +303,23 @@ def generate_reference_data():
     print("number of learning episodes: %d" % params['learning_episodes'])
 
 if __name__ == '__main__':
-    generate_reference_data()
+    # generate_reference_data()
+    loss_all = []
+    fp_all = []
+    fn_all = []
+    for i in range(3):
+        print("Experiment", i)
+        loss, fp, fn = generate_reference_data(i)
+        loss_all.append(loss)
+        fp_all.append(fp)
+        fn_all.append(fn)
+
+    loss = sum(loss_all) / len(loss_all)
+    fp = sum(fp_all) / len(fp_all)
+    fn = sum(fn_all) / len(fn_all)
+    fpn = fp + fn
+
+    wandb.log({"loss": loss,
+               "fp": fp,
+               "fn": fn,
+               "fpn": fpn})
