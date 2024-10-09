@@ -41,6 +41,7 @@ import numpy as np
 from collections import defaultdict
 
 from shtm import helper
+from fna.decoders.readouts import Readout
 
 
 class Model:
@@ -56,7 +57,7 @@ class Model:
     In addition, each model may implement other model-specific member functions.
     """
 
-    def __init__(self, params, sequences, vocabulary):
+    def __init__(self, params, seq_set_instances, seq_set_instance_size, vocabulary):
         """Initialize model and simulation instance, including
 
         1) parameter setting,
@@ -77,9 +78,12 @@ class Model:
 
         # data directory
         if self.params['evaluate_replay']:
-            self.data_path = helper.get_data_path(self.params['data_path'], self.params['label'], 'replay')
+            self.data_path = helper.get_data_path(self.params['data_path'],
+                                                  self.params['label'],
+                                                  'replay')
         else:
-            self.data_path = helper.get_data_path(self.params['data_path'], self.params['label'])
+            self.data_path = helper.get_data_path(self.params['data_path'],
+                                                  self.params['label'])
 
         if nest.Rank() == 0:
             if self.data_path.is_dir():
@@ -100,17 +104,20 @@ class Model:
         random.seed(self.params['seed'])
 
         # input stream: sequence data
-        self.sequences = sequences
+        self.seq_set_instances = seq_set_instances
+        self.seq_set_instance_size = seq_set_instance_size
+
         self.vocabulary = vocabulary
-        self.length_sequence = len(self.sequences[0])
-        self.num_sequences = len(self.sequences)
+        self.vocab_size = len(vocabulary)
+        #self.length_sequence = len(self.sequences[0])
+        #self.num_sequences = len(self.sequences)
 
         # initialize the NEST kernel
         self.__setup_nest()
 
         # get time constant for dendriticAP rate
-        self.params['soma_params']['tau_h'] = self.__get_time_constant_dendritic_rate(
-            calibration=self.params['calibration'])
+        #self.params['soma_params']['tau_h'] = self.__get_time_constant_dendritic_rate(
+        #    calibration=self.params['calibration'])
 
 
     def __setup_nest(self):
@@ -130,7 +137,7 @@ class Model:
         })
         nest.set_verbosity("M_ERROR")
 
-    def create(self):
+    def create(self, element_activations):
         """Create and configure all network nodes (neurons + recording and stimulus devices)
         """
 
@@ -139,25 +146,19 @@ class Model:
         # create excitatory population
         self.__create_neuronal_populations()
 
-        # compute timing of the external inputs and recording devices
-        # TODO: this function should probably not be part of the model
-        excitation_times, excitation_times_neuron, idend_recording_times = self.__compute_timing_external_inputs(
-                self.params['DeltaT'], self.params['DeltaT_seq'], self.params['DeltaT_cue'], 
-                self.params['excitation_start'], self.params['time_dend_to_somatic'])
-
         # create spike generators
-        self.__create_spike_generators(excitation_times_neuron)
+        self.__create_spike_generators(element_activations)
 
         # create recording devices
-        self.__create_recording_devices(excitation_times, idend_recording_times)
+        self.__create_recording_devices()
 
-        # create weight recorder
-        if self.params['active_weight_recorder']:
-            self.__create_weight_recorder()
-
-        if self.params['add_bkgd_noise']:
-            self.__create_noise_sources()
-
+#        # create weight recorder
+#        if self.params['active_weight_recorder']:
+#            self.__create_weight_recorder()
+#
+#        if self.params['add_bkgd_noise']:
+#            self.__create_noise_sources()
+#
     def connect(self):
         """Connects network and devices
         """
@@ -181,35 +182,37 @@ class Model:
         nest.Connect(self.exc_neurons, self.spike_recorder_soma)
         nest.Connect(self.inh_neurons, self.spike_recorder_inh)
 
-        # connect multimeter for recording dendritic current
-        if self.params['evaluate_performance']:
-            nest.Connect(self.multimeter_idend_eval, self.exc_neurons)
-
-        # connect multimeter for recording dendritic current from all subpopulations of the last trial
-        if self.params['record_idend_last_episode']:
-            nest.Connect(self.multimeter_idend_last_episode, self.exc_neurons)
-
-        # set min synaptic strength
-        self.__set_min_synaptic_strength()
-
-        if self.params['add_bkgd_noise']:
-            self.__connect_noise_sources()
-
-        if self.params['add_stimulus_noise']:
-            nest.Connect(self.packet_parrot, self.spike_packet_recorder)
-
-        # connect the voltmeter for recording membrane voltages
-        if self.params['record_voltage'] and self.params['add_bkgd_noise']:
-            nest.Connect(self.vm, self.exc_neurons)
-
+#        # connect multimeter for recording dendritic current
+#        if self.params['evaluate_performance']:
+#            nest.Connect(self.multimeter_idend_eval, self.exc_neurons)
+#
+#        # connect multimeter for recording dendritic current from all subpopulations of the last trial
+#        if self.params['record_idend_last_episode']:
+#            nest.Connect(self.multimeter_idend_last_episode, self.exc_neurons)
+#
+#        # set min synaptic strength
+#        self.__set_min_synaptic_strength()
+#
+#        if self.params['add_bkgd_noise']:
+#            self.__connect_noise_sources()
+#
+#        if self.params['add_stimulus_noise']:
+#            nest.Connect(self.packet_parrot, self.spike_packet_recorder)
+#
+#        # connect the voltmeter for recording membrane voltages
+#        if self.params['record_voltage'] and self.params['add_bkgd_noise']:
+#            nest.Connect(self.vm, self.exc_neurons)
+#
     def simulate(self):
         """Run simulation.
         """
 
+        self.sim_time = 5000. 
+
         # the simulation time is set during the creation of the network  
         if nest.Rank() == 0:
             print('\nSimulating {} ms.'.format(self.sim_time))
-   
+  
         nest.Simulate(self.sim_time)
 
         # record somatic spikes
@@ -224,39 +227,39 @@ class Model:
         #x = helper.load_numpy_spike_data(self.data_path, fname)
 
         # record dendritic currents corresponding to last elements in sequences
-        if not(self.params['evaluate_replay']):
-            times = []
-            senders = []
-            I_dends = []
-            for i in range(self.num_sequences):
-                sender = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['senders']
-                time = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['times']
-                I_dend = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['I_dend']
-
-                senders.append(sender)
-                times.append(time)
-                I_dends.append(I_dend)
-
-            senders = np.concatenate(senders)
-            times = np.concatenate(times)
-            I_dends = np.concatenate(I_dends)
-            data = np.array([senders, times, I_dends]).T
-                
-            fname = 'idend_eval'
-            print("save data to %s/%s ..." % (self.data_path, fname))
-            np.save('%s/%s' % (self.data_path, fname), data)
-
-        # record dendritic currents of last episode
-        if self.params['record_idend_last_episode']:
-            senders = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['senders']
-            times = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['times']
-            I_dends = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['I_dend']
-
-            data = np.array([senders, times, I_dends]).T
-                    
-            fname = 'idend_last_episode'
-            print("save data to %s/%s ..." % (self.data_path, fname))
-            np.save('%s/%s' % (self.data_path, fname), data)
+#        if not(self.params['evaluate_replay']):
+#            times = []
+#            senders = []
+#            I_dends = []
+#            for i in range(self.num_sequences):
+#                sender = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['senders']
+#                time = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['times']
+#                I_dend = nest.GetStatus(self.multimeter_idend_eval)[i]['events']['I_dend']
+#
+#                senders.append(sender)
+#                times.append(time)
+#                I_dends.append(I_dend)
+#
+#            senders = np.concatenate(senders)
+#            times = np.concatenate(times)
+#            I_dends = np.concatenate(I_dends)
+#            data = np.array([senders, times, I_dends]).T
+#                
+#            fname = 'idend_eval'
+#            print("save data to %s/%s ..." % (self.data_path, fname))
+#            np.save('%s/%s' % (self.data_path, fname), data)
+#
+#        # record dendritic currents of last episode
+#        if self.params['record_idend_last_episode']:
+#            senders = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['senders']
+#            times = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['times']
+#            I_dends = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['I_dend']
+#
+#            data = np.array([senders, times, I_dends]).T
+#                    
+#            fname = 'idend_last_episode'
+#            print("save data to %s/%s ..." % (self.data_path, fname))
+#            np.save('%s/%s' % (self.data_path, fname), data)
 
     def __create_neuronal_populations(self):
         """'Create neuronal populations
@@ -272,43 +275,23 @@ class Model:
                                        self.params['n_I'] * self.num_subpopulations,
                                        params=self.params['inhibit_params'])
 
-    def __create_spike_generators(self, excitation_times_neuron):
+    def __create_spike_generators(self, element_activations):
         """Create spike generators
         """
 
-        excitation_times_soma, excitation_times_dend = excitation_times_neuron 
+        # create external spike sources
+        self.input_excitation_soma = nest.Create('spike_generator', self.vocab_size)
 
-        self.input_excitation_soma = {}
-        self.input_excitation_dend = {}
+        # round element activation times to simulation grid
+        element_activations[:, 1] = np.round(element_activations[:, 1]/self.params['dt'])*self.params['dt']
+        self.element_activations = element_activations
+
+        # set element activation times
+        for cx in range(len(self.input_excitation_soma)):
+            act_times = np.array(self.element_activations[self.element_activations[:, 0] == cx, 1])
+            self.input_excitation_soma[cx].set({'spike_times': np.sort(act_times)})
         
-        if self.params['add_stimulus_noise']:
-           for char in self.vocabulary:
-               self.input_excitation_soma[char] = nest.Create('pulsepacket_generator')
-               self.input_excitation_dend[char] = nest.Create('pulsepacket_generator')
-               nest.SetStatus(self.input_excitation_soma[char], {'pulse_times': excitation_times_soma[char],
-                                                                 'sdev': self.params['spike_packet']['sdev'],
-                                                                 'activity': self.params['spike_packet']['activity']})
-
-           # create a parrot neuron and a spike recorder to record from the pulsepacket_generator
-           self.packet_parrot = nest.Create('parrot_neuron')
-           self.spike_packet_recorder = nest.Create('spike_recorder')
-
-        else:
-        
-           for char in self.vocabulary:
-               self.input_excitation_soma[char] = nest.Create('spike_generator')
-               self.input_excitation_dend[char] = nest.Create('spike_generator')
-
-               # set spike generator status with the above computed excitation times
-               nest.SetStatus(self.input_excitation_soma[char], {'spike_times': excitation_times_soma[char]})
-
-           # this makes the first population in the sequence sparse
-           if self.params['sparse_first_char']:
-               first_chars = [char for seq in self.sequences for char in [seq[0]]]
-               for char in first_chars:
-                   nest.SetStatus(self.input_excitation_dend[char], {'spike_times': excitation_times_dend[char]})
-
-    def __create_recording_devices(self, excitation_times, idend_recording_times):
+    def __create_recording_devices(self):
         """Create recording devices
         """
 
@@ -317,50 +300,50 @@ class Model:
         # create a spike recorder for inh neurons
         self.spike_recorder_inh = nest.Create('spike_recorder')
 
-        # create multimeter to record dendritic currents of exc_neurons at the time of the last element in the sequence
-        if self.params['evaluate_performance']:
-
-            self.multimeter_idend_eval = nest.Create('multimeter', self.num_sequences,
-                                                     params={'record_from': ['I_dend']})
-            for i in range(self.num_sequences):
-                idend_eval_spec_dict = {'offset': idend_recording_times[i][0] + self.params['idend_record_time'],
-                                        'interval': idend_recording_times[i][1] - idend_recording_times[i][0]}
-                nest.SetStatus(self.multimeter_idend_eval[i], idend_eval_spec_dict)
-
-        # create multimeter for recording dendritic current from all subpopulations of the last episode
-        if self.params['record_idend_last_episode']:
-
-            #print("record_idend_last_episode is not supported yet. Need to add manual saving of the data in the function simulate")
-            #raise
-
-            self.multimeter_idend_last_episode = nest.Create('multimeter', params={'record_from': ['I_dend']})
-
-            if self.params['evaluate_replay']:
-                idend_dict = {'interval': self.params['idend_recording_interval'],
-                              'start': self.params['excitation_start'],
-                              'stop': self.params['excitation_start'] \
-                                      + len(self.sequences) * self.params['DeltaT_cue']}
-
-                nest.SetStatus(self.multimeter_idend_last_episode, idend_dict)
-            else:
-                if self.params['active_weight_recorder']:
-                    number_elements_per_batch = 0
-                else:
-                    number_elements_per_batch = sum([len(seq) for seq in self.sequences])
-
-                idend_dict = {'interval': self.params['idend_recording_interval'],
-                              'start': excitation_times[-number_elements_per_batch],
-                              'stop': excitation_times[-1] + self.params['pad_time']}
-
-                nest.SetStatus(self.multimeter_idend_last_episode, idend_dict)
-
-        # create a voltmeter for recording membrane voltages
-        if self.params['record_voltage'] and self.params['add_bkgd_noise']:
-            self.vm = nest.Create('voltmeter', params={'record_from': ['V_m'], 
-                                                       'interval': self.params['vm_recording_interval'], 
-                                                       'start':excitation_times[-number_elements_per_batch],
-                                                       'stop': excitation_times[-1] + self.params['pad_time']})
-
+#        # create multimeter to record dendritic currents of exc_neurons at the time of the last element in the sequence
+#        if self.params['evaluate_performance']:
+#
+#            self.multimeter_idend_eval = nest.Create('multimeter', self.num_sequences,
+#                                                     params={'record_from': ['I_dend']})
+#            for i in range(self.num_sequences):
+#                idend_eval_spec_dict = {'offset': idend_recording_times[i][0] + self.params['idend_record_time'],
+#                                        'interval': idend_recording_times[i][1] - idend_recording_times[i][0]}
+#                nest.SetStatus(self.multimeter_idend_eval[i], idend_eval_spec_dict)
+#
+#        # create multimeter for recording dendritic current from all subpopulations of the last episode
+#        if self.params['record_idend_last_episode']:
+#
+#            #print("record_idend_last_episode is not supported yet. Need to add manual saving of the data in the function simulate")
+#            #raise
+#
+#            self.multimeter_idend_last_episode = nest.Create('multimeter', params={'record_from': ['I_dend']})
+#
+#            if self.params['evaluate_replay']:
+#                idend_dict = {'interval': self.params['idend_recording_interval'],
+#                              'start': self.params['excitation_start'],
+#                              'stop': self.params['excitation_start'] \
+#                                      + len(self.sequences) * self.params['DeltaT_cue']}
+#
+#                nest.SetStatus(self.multimeter_idend_last_episode, idend_dict)
+#            else:
+#                if self.params['active_weight_recorder']:
+#                    number_elements_per_batch = 0
+#                else:
+#                    number_elements_per_batch = sum([len(seq) for seq in self.sequences])
+#
+#                idend_dict = {'interval': self.params['idend_recording_interval'],
+#                              'start': excitation_times[-number_elements_per_batch],
+#                              'stop': excitation_times[-1] + self.params['pad_time']}
+#
+#                nest.SetStatus(self.multimeter_idend_last_episode, idend_dict)
+#
+#        # create a voltmeter for recording membrane voltages
+#        if self.params['record_voltage'] and self.params['add_bkgd_noise']:
+#            self.vm = nest.Create('voltmeter', params={'record_from': ['V_m'], 
+#                                                       'interval': self.params['vm_recording_interval'], 
+#                                                       'start':excitation_times[-number_elements_per_batch],
+#                                                       'stop': excitation_times[-1] + self.params['pad_time']})
+#
     def __create_weight_recorder(self):
         """Create weight recorder
         """
@@ -377,80 +360,6 @@ class Model:
         # create poisson generator
         self.poisson_generator = nest.Create('poisson_generator')
         nest.SetStatus(self.poisson_generator, {'rate': self.params['bkgd_noise']['rate']})
-
-    def __compute_timing_external_inputs(self, DeltaT, DeltaT_seq, DeltaT_cue, excitation_start, time_dend_to_somatic):
-        """Specifies the excitation times of the external input for each sequence element,
-        subsequent sequence elements are presented  with  inter-stimulus interval DeltaT,  
-        subsequent sequences are separated in time by an inter-sequence time interval DeltaT_seq,
-        during the replay, the presented cues are seperated by an intercue time interval Delta_cue,
-        In addition this function saves the times at which a dendritic current should be recorded,
-        we don't want to record the dendritic current every time step as this consumes a lot of memory,
-        so we instead record the dendritic current every 'episodes_to_testing' episodes,
-        recording the dendritic current is essential for computing the prediction performance,
-        the dendritic current is saved only at the time of last element in the sequence,
-        this is because when assessing the prediction performance, we compute the prediction error 
-        only with respect to the last element in the sequence
-        
-        Parameters
-        ---------
-        DeltaT               : float
-        DeltaT_seq           : float
-        DeltaT_cue           : float 
-        excitation_start     : float
-        time_dend_to_somatic : float
-
-        Returns:
-        --------
-        excitation_times: list(float)
-        excitation_times_soma: dict
-        excitation_times_dend: dict
-        idend_recording_times: dict
-        """
-
-        excitation_times_soma = defaultdict(list)
-        excitation_times_dend = defaultdict(list)
-        idend_recording_times = defaultdict(list)
-
-        excitation_times = []
-        sim_time = excitation_start
-        for le in range(self.params['learning_episodes'] + 1):
-
-            for seq_num, sequence in enumerate(self.sequences):
-                len_seq = len(sequence)
-                for i, char in enumerate(sequence):
-
-                    if i != 0:
-                        sim_time += DeltaT
-
-                    # store time of excitation for each symbol
-                    excitation_times_soma[char] += [sim_time]
-                    if i == 0:
-                        excitation_times_dend[char] += [sim_time - time_dend_to_somatic]
-
-                    # store dendritic spike times recording
-                    if (i == len_seq - 2) and (le % self.params['episodes_to_testing'] == 0):
-                        idend_recording_times[seq_num] += [sim_time]
-
-                    excitation_times.append(sim_time)
-
-                    if self.params['evaluate_replay']:
-                        break
-
-                # set timing between sequences
-                if self.params['evaluate_replay']:
-                    sim_time += DeltaT_cue
-                else:
-                    sim_time += DeltaT_seq
-
-        # save data
-        if self.params['evaluate_performance'] or self.params['evaluate_replay']:
-            np.save('%s/%s' % (self.data_path, 'idend_recording_times'), idend_recording_times)
-            np.save('%s/%s' % (self.data_path, 'excitation_times_soma'),
-                    excitation_times_soma)
-            np.save('%s/%s' % (self.data_path, 'excitation_times'), excitation_times)
-
-        self.sim_time = sim_time
-        return excitation_times, [excitation_times_soma, excitation_times_dend], idend_recording_times
 
     def __get_subpopulation_neurons(self, index_subpopulation):
         """Get neuron's indices (NEST NodeCollection) belonging to a subpopulation
@@ -477,7 +386,8 @@ class Model:
             nest.CopyModel(self.params['syn_dict_ee']['synapse_model'], 'stdsp_synapse_d', {'d': self.params['syn_dict_ee']['delay']})
             self.params['syn_dict_ee']['synapse_model'] = 'stdsp_synapse_d'
 
-        nest.Connect(self.exc_neurons, self.exc_neurons, conn_spec=self.params['conn_dict_ee'],
+        nest.Connect(self.exc_neurons, self.exc_neurons,
+                     conn_spec=self.params['conn_dict_ee'],
                      syn_spec=self.params['syn_dict_ee'])
 
     def __connect_inhibitory_neurons(self):
@@ -498,27 +408,18 @@ class Model:
         """Connect external inputs to subpopulations
         """
 
-        # get input encoding
-        self.characters_to_subpopulations = self.__stimulus_preference(fname='characters_to_subpopulations')
+        for subpopulation_index, sub_inp_excitation in enumerate(self.input_excitation_soma):
 
-        # save characters_to_subpopulations for evaluation
-        if self.params['evaluate_performance'] or self.params['evaluate_replay']:
-            fname = 'characters_to_subpopulations'
-            np.save('%s/%s' % (self.data_path, fname), self.characters_to_subpopulations)
-
-        for char in self.vocabulary:
-            subpopulations_indices = self.characters_to_subpopulations[char]
+            subpopulation_neurons = self.__get_subpopulation_neurons(subpopulation_index)
 
             # receptor type 1 correspond to the feedforward synapse of the 'iaf_psc_exp_multisynapse' model
-            for subpopulation_index in subpopulations_indices:
-                subpopulation_neurons = self.__get_subpopulation_neurons(subpopulation_index)
-                nest.Connect(self.input_excitation_soma[char], subpopulation_neurons,
-                             self.params['conn_dict_ex'], syn_spec=self.params['syn_dict_ex'])
-                nest.Connect(self.input_excitation_dend[char], subpopulation_neurons,
-                             self.params['conn_dict_edx'], syn_spec=self.params['syn_dict_edx'])
+            nest.Connect(sub_inp_excitation, subpopulation_neurons,
+                         self.params['conn_dict_ex'], syn_spec=self.params['syn_dict_ex'])
+                #nest.Connect(self.input_excitation_dend[char], subpopulation_neurons,
+                #             self.params['conn_dict_edx'], syn_spec=self.params['syn_dict_edx'])
 
-                if self.params['add_stimulus_noise']:
-                    nest.Connect(self.input_excitation_soma[char], self.packet_parrot)
+                #if self.params['add_stimulus_noise']:
+                #    nest.Connect(self.input_excitation_soma[char], self.packet_parrot)
 
     def __connect_noise_sources(self):
         """Connect noise source
@@ -536,42 +437,6 @@ class Model:
         nest.Connect(self.poisson_generator, self.exc_neurons, conn, syn_spec=inh_syn_spec) 
         nest.Connect(self.poisson_generator, self.exc_neurons, conn, syn_spec=exc_syn_spec) 
 
-    def __stimulus_preference(self, fname='characters_to_subpopulations'):
-        """Assign a subset of subpopulations to a each element in the vocabulary.
-
-        Parameters
-        ----------
-        fname : str
-
-        Returns
-        -------
-        characters_to_subpopulations: dict
-        """
-
-        if len(self.vocabulary) * self.params['L'] > self.num_subpopulations:
-            raise ValueError(
-                "num_subpopulations needs to be large than length_user_characters*num_subpopulations_per_character")
-
-        characters_to_subpopulations = defaultdict(list)  # a dictionary that assigns mini-subpopulation to characters
-
-        subpopulation_indices = np.arange(self.num_subpopulations)
-        # permuted_subpopulation_indices = np.random.permutation(subpopulation_indices)
-        permuted_subpopulation_indices = subpopulation_indices
-        index_characters_to_subpopulations = []
-
-        if self.params['load_connections']:
-            # load connectivity: from characters to mini-subpopulations
-            path = helper.get_data_path(self.params['data_path'], self.params['label'])
-            characters_to_subpopulations = load_input_encoding(path, fname)
-        else:
-            for char in self.vocabulary:
-                # randomly select a subset of mini-subpopulations for a character
-                characters_to_subpopulations[char] = permuted_subpopulation_indices[:self.params['L']]
-                # delete mini-subpopulations from the permuted_subpopulation_indices that are already selected
-                permuted_subpopulation_indices = permuted_subpopulation_indices[self.params['L']:]
-
-        return characters_to_subpopulations
-
     def __set_min_synaptic_strength(self):
         """Set synaptic Wmin
         """
@@ -584,6 +449,37 @@ class Model:
             connections.set({'Pmin': connections.p})
         else:
             connections.set({'Wmin': connections.weight})
+
+    def load_resampled_data(self):
+    
+        somatic_spikes = helper.load_numpy_spike_data(self.data_path, 'somatic_spikes')
+
+        state_matrix_soma, labels = helper.get_state_matrix(somatic_spikes,
+                                                            self.seq_set_instances,
+                                                            self.seq_set_instance_size,
+                                                            self.params,
+                                                            mode='train')
+        return state_matrix_soma, labels
+
+    def train_readout(self, state_matrix, labels):
+
+        r_params = {}
+        r_params["task"] = "prediction"
+        r_params["algorithm"] = "ridge"
+        r_params["extractor"] = "nothing-here"
+        rng = np.random.default_rng(0)  # doesn't matter, just make it reproducible
+
+        # create new Readout for each subtask
+        readout = Readout(f"readout-offline-prediction", r_params, rng)
+
+        ls = np.array(labels[0])
+        readout.train("batch_label", state_matrix[0], ls)
+
+        performance = readout.evaluate(process_output_method="k-WTA",
+                                       symbolic=True,
+                                       vocabulary=self.alphabet)
+
+        return performance
 
     def save_connections(self, fname='ee_connections'):
         """Save connection matrix
