@@ -62,5 +62,5 @@ for batch_id in range(int(np.ceil(1.*N/JOBMAX))):
     ## execute submission_script
     print("submitting %s" % (submission_script))
     os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
-    os.system("sbatch ./%s" % submission_script)
-    os.system("rm %s" % submission_script)
+    #os.system("sbatch ./%s" % submission_script)
+    #os.system("rm %s" % submission_script)

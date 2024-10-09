@@ -246,37 +246,27 @@ def generate_reference_data(arr_id=None):
         np.save('%s/%s/%s' % (data_path, params['label'], fname), seq_set_transformed)
         np.save('%s/%s/%s' % (data_path, params['label'], fname_voc), vocabulary_transformed)
 
-    #sequences, _, vocabulary = helper.generate_sequences(params['task'], params['data_path'], params['label'])
+    #sequences, _, vocabulary = helper.generate_sequences(params['task'],
+    #                                                     params['data_path'],
+    #                                                     params['label'])
     print(f"\n vocabulary_size {len(vocabulary_transformed)}, R={R}, O={O}, S={S}, C={C}")
 
     # ###############################################################
-    # create network
+    # load resampled data
     # ===============================================================
     params['M'] = len(vocabulary_transformed)
     model_instance = model.Model(params,
                                  seq_set_instance,
                                  seq_set_instance_size,
                                  vocabulary_transformed)
-    time_model = time.time()
 
-    model_instance.create(element_activations)
-    time_create = time.time()
+    xt, labels = model_instance.load_resampled_data()
 
-    # ###############################################################
-    # connect the netwok
-    # ===============================================================
-    model_instance.connect()
-    time_connect = time.time()
-    
-    # store connections before learning
-    if params['store_connections']:
-        model_instance.save_connections(fname='ee_connections_before')
+    acc = model_instance.train_readout(xt, labels)
 
-    # ###############################################################
-    # simulate the network
-    # ===============================================================
-    model_instance.simulate()
-    time_simulate = time.time()
+    print(xt.shape, labels.shape)
+
+    exit()
 
     # store connections after learning
     if params['store_connections']:
