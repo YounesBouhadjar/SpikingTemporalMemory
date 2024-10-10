@@ -201,42 +201,6 @@ def generate_reference_data(arr_id=None):
     # convert sequence set instance to element activation times
     element_activations = sg.seq_set_instance_gdf(seq_set_instance)
 
-    if False:
-        import matplotlib.pyplot as plt
-
-        plt.rcParams.update({'font.size': 8})
-        plt.figure(1,dpi=300,figsize=(5,3))
-        plt.clf()
-
-        ylim = (vocabulary[0],vocabulary[-1])
-        sg.plot_seq_instance_intervals(seq_set,seq_ids,seq_set_instance,ylim,alpha=0.1,cm='jet')    
-
-        colormap = plt.get_cmap('jet')
-        colors = [colormap(k) for k in np.linspace(0, 1, len(seq_set))]    
-        for cs in range(len(seq_set_instance)):
-            clr = colors[seq_ids[cs]]
-            plt.plot(seq_set_instance[cs]['times'],seq_set_instance[cs]['elements'],'o',ms=3,mfc=clr,mew=0.5,mec='k',rasterized=True)
-            plt.text(seq_set_instance[cs]['times'][0],vocabulary[-1]+1,r"%d" % seq_ids[cs],fontsize=5)
-        plt.xlabel(r'time (ms)')
-        plt.ylabel(r'element ID')
-        plt.xlim(0,stop)
-        plt.ylim(vocabulary[0]-0.5,vocabulary[-1]+2)
-
-        plt.setp(plt.gca(),yticks = vocabulary)
-        
-        plt.subplots_adjust(left=0.13, right=0.95, bottom=0.15, top=0.95)
-        plt.savefig('example_sequence_set_instance.pdf')
-
-        exit()
-
-    #params['M'] = len(vocabulary)
- 
-    #seq_set_transformed = [['B', 'C', 'E', 'F', 'B', 'C', 'E', 'C', 'F', 'B', 'C', 'E'], ['B', 'C', 'E', 'C', 'F', 'B', 'C', 'E', 'D', 'E', 'F', 'B']]
-    #seq_set_transformed = [['A', 'D', 'D', 'E'], ['B', 'D', 'D', 'F']]
-    #seq_set_transformed = [['A', 'D', 'B', 'E'], ['C', 'D', 'B', 'F']]
-    #seq_set_transformed = [['A', 'D'], ['B', 'D']]
-    #vocabulary_transformed = ['A', 'B', 'C', 'D', 'E', 'F']
-
     if params['store_training_data']:
         fname = 'training_data'
         fname_voc = 'vocabulary'
@@ -264,121 +228,10 @@ def generate_reference_data(arr_id=None):
 
     acc = model_instance.train_readout(xt, labels)
 
-    print(xt.shape, labels.shape)
-
-    exit()
-
-    # store connections after learning
-    if params['store_connections']:
-        model_instance.save_connections(fname='ee_connections')
-
-    print(
-        '\nTimes of Rank {}:\n'.format(
-            nest.Rank()) +
-        '  Total time:          {:.3f} s\n'.format(
-            time_simulate -
-            time_start) +
-        '  Time to initialize:  {:.3f} s\n'.format(
-            time_model -
-            time_start) +
-        '  Time to create:      {:.3f} s\n'.format(
-            time_create -
-            time_model) +
-        '  Time to connect:     {:.3f} s\n'.format(
-            time_connect -
-            time_create) +
-        '  Time to simulate:    {:.3f} s\n'.format(
-            time_simulate -
-            time_connect))
-
-    # display prediction performance only for debugging    
-    if params['evaluate_performance']:
-    
-        data_path = helper.get_data_path(model_instance.params['data_path'],
-                                         model_instance.params['label'])
-
-        # load spikes from reference data
-        somatic_spikes = helper.load_numpy_spike_data(data_path, 'somatic_spikes')
-
-        wandb.finish()
-        exit()
-
-        idend_eval = helper.load_numpy_spike_data(data_path, 'idend_eval')
-        excitation_times = helper.load_data(data_path, 'excitation_times')
-
-        # get recoding times of dendriticAP
-        idend_recording_times = helper.load_data(data_path, 'idend_recording_times')
-        characters_to_subpopulations = helper.load_data(data_path, 'characters_to_subpopulations')
-
-        seq_avg_errors, seq_avg_false_positives, seq_avg_false_negatives, _ = helper.compute_prediction_performance(somatic_spikes, 
-                                                                                                                    idend_eval, 
-                                                                                                                    idend_recording_times, 
-                                                                                                                    characters_to_subpopulations, 
-                                                                                                                    model_instance.sequences, 
-                                                                                                                    model_instance.params)
-
-        # get number of active neuron for each element in the sequence
-        number_elements_per_batch = sum([len(seq) for seq in model_instance.sequences])
-        start_time = excitation_times[-number_elements_per_batch] - 5 
-        end_time = excitation_times[-1] + 5
-
-        idx_times = np.where((np.array(excitation_times) > start_time) & (np.array(excitation_times) < end_time))  
-        excitation_times_sel = np.array(excitation_times)[idx_times]
-
-        num_active_neurons = helper.number_active_neurons_per_element(model_instance.sequences, 
-                                                                      somatic_spikes[:,1], 
-                                                                      somatic_spikes[:,0], 
-                                                                      excitation_times_sel, 
-                                                                      params['fixed_somatic_delay'])
-
-        print("\n##### testing sequences with number of somatic spikes ")
-        count_false_negatives = 0
-        for i, (sequence, seq_counts) in enumerate(zip(model_instance.sequences, num_active_neurons)): 
-            seq = ''
-            for j, (char, counts) in enumerate(zip(sequence, seq_counts)):
-                seq += str(char)+'('+ str(counts)+')'.ljust(2)
-
-                if j != 0 and counts > 0.5*params['n_E']:
-                    count_false_negatives += 1
-
-            print("sequence %d: %s" % (i, seq))   
-
-        print("False negative counts", count_false_negatives)   
-
-        wandb.log({"loss"+str(arr_id): seq_avg_errors[-1],
-                   "fp"+str(arr_id): seq_avg_false_positives[-1],
-                   "fn"+str(arr_id): seq_avg_false_negatives[-1]})
-
-        return seq_avg_errors[-1], seq_avg_false_positives[-1], seq_avg_false_negatives[-1]
-
-
-    wandb.finish()
-
-    print("\n### Plasticity parameters")
-    print("lambda: %0.4f" % params['syn_dict_ee']['lambda'])
-    print("lambda minus: %0.4f" % model_instance.params['syn_dict_ee']['lambda_minus']) 
-    print("excitation step %0.1fms" % params['DeltaT']) #30-50  
-    print("seed number: %d" % params['seed']) 
-    print("number of learning episodes: %d" % params['learning_episodes'])
+    return acc
 
 if __name__ == '__main__':
     # generate_reference_data()
-    loss_all = []
-    fp_all = []
-    fn_all = []
-    for i in range(3):
-        print("Experiment", i)
-        loss, fp, fn = generate_reference_data(i)
-        loss_all.append(loss)
-        fp_all.append(fp)
-        fn_all.append(fn)
+    acc = generate_reference_data()
 
-    loss = sum(loss_all) / len(loss_all)
-    fp = sum(fp_all) / len(fp_all)
-    fn = sum(fn_all) / len(fn_all)
-    fpn = fp + fn
-
-    wandb.log({"loss": loss,
-               "fp": fp,
-               "fn": fn,
-               "fpn": fpn})
+    wandb.log({"acc": acc})
