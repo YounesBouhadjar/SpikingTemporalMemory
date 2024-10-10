@@ -477,7 +477,7 @@ class Model:
 
         performance = readout.evaluate(process_output_method="k-WTA",
                                        symbolic=True,
-                                       vocabulary=self.alphabet)
+                                       vocabulary=self.vocabulary)
 
         return performance
 

@@ -716,11 +716,11 @@ def homeostasis_contribution(hs, Wmax=1, r_d=0, r_t=1):
 
 #################################################
 def get_state_matrix(somatic_spikes,
-                    seq_set_instances,
-                    seq_set_instance_size,
-                    params,
-                    mode='train',
-                    debug=False):
+                     seq_set_instances,
+                     seq_set_instance_size,
+                     params,
+                     mode='train',
+                     debug=False):
     """
     compute state matrix
 
@@ -770,7 +770,9 @@ def get_state_matrix(somatic_spikes,
                 senders_soma = np.array(senders_somatic_spikes[indices_soma], int)
 
                 x[senders_soma-1, k] = 1
-                ls.append(ele)
+                tg = np.zeros(params['task']['vocabulary_size'])
+                tg[ele-1] = 1 
+                ls.append(tg)
 
             #acc_seq += len(seq)
 
@@ -779,7 +781,6 @@ def get_state_matrix(somatic_spikes,
 
         xt.append(x)
         labels.append(ls)
-
 
     if debug:
         print(f"plot somatic state matrix during {mode}: matrix_{mode}_soma.pdf")
