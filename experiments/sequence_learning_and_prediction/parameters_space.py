@@ -148,10 +148,10 @@ p['active_weight_recorder'] = False            # if turned on, the weights are r
 # task parameters
 p['task'] = {}
 p['task']['vocabulary_size'] = 16                 # vocabulary size
-p['task']['S'] = 8                               # number of sequences
+p['task']['S'] = 4                               # number of sequences
 p['task']['C'] = 8                               # sequence length
-p['task']['R'] = 6#para.ParameterRange(np.arange(2,6+2,2))                              # number of shared subsequences
-p['task']['O'] = 4#para.ParameterRange(np.arange(2,8+2,2))                              # length of shared subsequences ("order")
+p['task']['R'] = 1#para.ParameterRange(np.arange(2,6+2,2))                              # number of shared subsequences
+p['task']['O'] = 6#para.ParameterRange(np.arange(2,8+2,2))                              # length of shared subsequences ("order")
 p['task']['seed'] = 0                             # seed number
 
 # setup the training loop  
