@@ -202,10 +202,11 @@ def derived_parameters(params):
     # compute psc max from the psp max
     params['J_IE_psp'] = 1.2 * params['inhibit_params']['V_th']         # inhibitory PSP as a response to an input from E neuron
 
-    if params['evaluate_replay']:
-        params['J_IE_psp'] /= params['n_E']
-    else:
-        params['J_IE_psp'] /= params['pattern_size']
+    #if params['evaluate_replay']:
+    #    params['J_IE_psp'] /= params['n_E']
+    #else:
+    #    params['J_IE_psp'] /= params['pattern_size']
+    params['J_IE_psp'] /= params['pattern_size']
 
     params['syn_dict_ex']['weight'] = psp_max_2_psc_max(params['J_EX_psp'], params['soma_params']['tau_m'],
                                                    params['soma_params']['tau_syn1'], params['R_m_soma'])
@@ -330,8 +331,9 @@ def get_data_path(pars, ps_label='', add_to_path=''):
     try:
         home = pars['home']
     except:
-        home = '../..'
+        #home = '../..'
         #home = Path.home()
+        home = '/work/users/bouhadjar'
 
     data_path = Path(home, pars['data_root_path'],
                      pars['project_name'],
@@ -711,6 +713,88 @@ def homeostasis_contribution(hs, Wmax=1, r_d=0, r_t=1):
 
     return hs * (r_t - r_d) * Wmax
 
+
+#################################################
+def get_state_matrix(somatic_spikes,
+                     seq_set_instances,
+                     seq_set_instance_size,
+                     params,
+                     mode='train',
+                     debug=False):
+    """
+    compute state matrix
+
+    Parameters
+    ----------
+    test_sequences         : list
+    times_somatic_spikes   : ndarray
+    senders_somatic_spikes : ndarray
+    excitation_times       : list
+
+    Returns
+    -------
+    state matrix : numpy array
+    """
+
+    #assert len(excitation_times) >= 2, "excitation times need to contain at leasts 2 components"
+    #DeltaT = excitation_times[1] - excitation_times[0] - stim_dur
+
+    xt = []
+    labels = []
+    ls = []
+    shift = 0.
+    interval = 14.
+
+    end_iterations = 0
+
+    for q in range(seq_set_instance_size):
+
+        # initialize state matrix
+        length_seqs = len(seq_set_instances[q]['elements'])
+
+        if len(somatic_spikes[0]) != 0:
+            x = np.zeros((params['n_E']*params['M'], length_seqs))
+            times_somatic_spikes = somatic_spikes[:, 1]
+            senders_somatic_spikes = somatic_spikes[:, 0]
+            # for each sequence in the test sequences
+
+            acc_seq = 0
+            ls = []
+                # for each character in the sequence
+            for k, (ele, time) in enumerate(zip(seq_set_instances[q]['elements'], seq_set_instances[q]['times'])):
+
+                #indices_soma = np.where((times_somatic_spikes < (excitation_times[j] + s_t+min(interval, deltaT))) & 
+                #                        (times_somatic_spikes > (excitation_times[j] + s_t-min(interval, s_t)-shift)))
+                indices_soma = np.where((times_somatic_spikes < (time + interval)) & 
+                                        (times_somatic_spikes > (time - shift)))
+                senders_soma = np.array(senders_somatic_spikes[indices_soma], int)
+
+                x[senders_soma-1, k] = 1
+                tg = np.zeros(params['task']['vocabulary_size'])
+                tg[ele-1] = 1 
+                ls.append(tg)
+
+            #acc_seq += len(seq)
+
+        else:
+            x = np.zeros((params['n_E']*params['M'], length_seqs))
+
+        xt.append(x)
+        labels.append(ls)
+
+    if debug:
+        print(f"plot somatic state matrix during {mode}: matrix_{mode}_soma.pdf")
+        import matplotlib.pyplot as plt 
+
+        plt.figure()
+        plt.imshow(x[:,:20], aspect='auto', origin='lower')
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.colorbar()
+        plt.savefig(f"matrix_{mode}_somatic.pdf")
+        plt.close()
+
+    return xt, labels
 
 ###############################################################################
 def synaptic_plastic_change(facilitate_factor, tau_plus, w_max, hs, delta_t=40.):

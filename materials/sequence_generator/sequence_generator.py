@@ -739,23 +739,14 @@ def example():
 
     ####################    
     
-    seq_set, shared_seq_set, vocabulary, seq_set_intervals = generate_sequences(S, C, R, O,
-                                                                                vocabulary_size,
-                                                                                minimal_prefix_length,
-                                                                                minimal_postfix_length,
-                                                                                seed,
-                                                                                redraw)
+    seq_set, shared_seq_set, vocabulary, seq_set_intervals = generate_sequences(S, C, R, O, vocabulary_size, minimal_prefix_length, minimal_postfix_length, seed, redraw)
     print_sequences(seq_set,shared_seq_set,vocabulary,seq_set_intervals,label=' (int)')
     
     shared_seq_set_transformed = transform_sequence_set(shared_seq_set, alphabet)    
     seq_set_transformed = transform_sequence_set(seq_set, alphabet)
     vocabulary_transformed = transform_sequence(vocabulary, alphabet)
 
-    print_sequences(seq_set_transformed,
-                    shared_seq_set_transformed,
-                    vocabulary_transformed,
-                    seq_set_intervals,
-                    label=' (latin)')
+    print_sequences(seq_set_transformed,shared_seq_set_transformed,vocabulary_transformed,seq_set_intervals,label=' (latin)')
     
     seq_set_instance, seq_ids = generate_sequence_set_instance(
         seq_set,
@@ -800,20 +791,7 @@ def example():
 
 ##############################################################################
 
-if __name__ == '__main__':
-
-    seq_set, vocabulary, seq_set_instance, seq_ids = example()
-
-    print("seq_set", seq_set)
-    print("vocabulary", vocabulary)
-    print("seq_set_instance", seq_set_instance)
-    print("seq_ids", seq_ids)
-
-    element_activations = seq_set_instance_gdf(seq_set_instance)
-
-    print("element_activations", element_activations)
-
-    exit()
+#seq_set, vocabulary, seq_set_instance, seq_ids = example()
 
 ##############################################################################
 

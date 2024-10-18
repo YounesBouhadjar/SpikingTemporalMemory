@@ -1,30 +1,49 @@
-name: spiking-htm
+name: ext_spiking-tm
 channels:
-  #- conda-forge  
-  - defaults
+  - conda-forge  
+  #- defaults
 dependencies:
-  - python==3.8  
-  - pip  
+  # Basics ------------------
+  - python == 3.9
+  - pip
+
+  # Building NEST -----------
+  - cmake >= 3.12
+  - cython
+  - openmpi
+  - boost >= 1.69
+  - gsl >= 1.11
+  - libtool
+  - readline
+  - hdf5
+
+  # Working with NEST ------
+  - ipython
   - matplotlib
+  - jupyter
+  - jupyterlab
   - numpy
   - joblib
   - pyyaml
-  - tqdm  
+  - tqdm
   - scipy                         # required only for the generating the figure motif probability 
-  - ffmpeg                        # required for generating the video
+  #- ffmpeg                        # required for generating the video
   
   # required packages for the NEST installation
   #- gcc_linux-64
   #- gxx_linux-64
-  - cmake>=3.12
-  - cython>=0.28.3
-  - libtool
-  - gsl 
-  - readline 
+  #- cmake>=3.12
+  #- cython>=0.28.3
+  #- libtool
+  #- gsl 
+  #- readline 
+
+  - nest-simulator == 3.6  
 
   # additional required packages installed via pip  
   - pip:  
     - parameters
-    - -e .        # installs the shtm package 
-    - snakemake   # this is only used for automatizing the generation of the figures,
-    - odetoolbox==2.3
+    #- -e .        # installs the shtm package 
+    #- snakemake   # this is only used for automatizing the generation of the figures,
+    #- odetoolbox==2.3
+    - nestml==6.0.0

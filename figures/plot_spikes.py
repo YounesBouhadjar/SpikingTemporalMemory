@@ -11,7 +11,7 @@ import utils
 path_dict = {} 
 path_dict['data_root_path'] = 'data'
 path_dict['project_name'] = 'sequence_learning_performance' 
-path_dict['parameterspace_label'] = 'sequence_learning_and_prediction'
+path_dict['parameterspace_label'] = 'sequence_learning_and_prediction_task_complexity_1'
 
 # get parameters 
 PS, PS_path = utils.get_parameter_set(path_dict)
@@ -19,7 +19,7 @@ PS, PS_path = utils.get_parameter_set(path_dict)
 PL = utils.parameter_set_list(PS)
 params = PL[0]
 label = params['label']
-replay = False
+replay = True
 
 # get trained sequences
 sequences = load_data(PS_path,  f'{label}/training_data')
@@ -75,17 +75,25 @@ panel_label_pos = (-0.1,1.0)
 #TODO here we assume that the sequences are of the same length
 
 if replay: 
-    number_elements_per_batch = len(sequences) * len(sequences[0])
+    #number_elements_per_batch = len(sequences) * len(sequences[0])
+    number_elements_per_batch = 2 #len(sequences) * len(sequences[0])
     start_time = 0.
-    end_time = excitation_times[number_elements_per_batch] 
+    print(excitation_times[:number_elements_per_batch])
+    end_time = excitation_times[number_elements_per_batch] + 100. 
 else:
     #number_elements_per_batch = len(sequences) * len(sequences[0])
-    number_elements_per_batch = len(sequences) * len(sequences[0])
+    number_elements_per_batch = 2 * len(sequences[0])
     #start_time = excitation_times[-number_elements_per_batch] 
     start_time = excitation_times[-number_elements_per_batch] 
     end_time = excitation_times[-1] + 10
 
-utils.plot_spikes(somatic_spikes, [[]], dendritic_current, start_time, end_time, params['soma_params']['I_p']-5, params['M']*params['n_E'], params['M'])
+utils.plot_spikes(somatic_spikes, [[]],
+                  dendritic_current,
+                  start_time,
+                  end_time,
+                  params['soma_params']['I_p']-5,
+                  params['M']*params['n_E'],
+                  params['M'])
 
 ticks_pos = shifted_subpopulation_indices * params['n_E']
 ticks_label = chars_per_subpopulation
@@ -94,11 +102,17 @@ subpopulation_indices_background = np.arange(params['M'])*params['n_E']
 plt.yticks(ticks_pos, ticks_label)
 
 for i in range(params['M'])[::2]:
-    plt.axhspan(subpopulation_indices_background[i], subpopulation_indices_background[i]+params['n_E'], facecolor='0.2', alpha=0.1)
+    plt.axhspan(subpopulation_indices_background[i],
+                subpopulation_indices_background[i]+params['n_E'],
+                facecolor='0.2',
+                alpha=0.1)
 
 print('--------------------------------------------------')
 path = 'img'
-fname = 'spiking_data'
+if replay:
+    fname = 'spiking_data_replay'
+else:
+    fname = 'spiking_data_prediction'
 print('save here: %s/%s.pdf ...' % (path, fname))
 os.system('mkdir -p %s' % (path))
 plt.savefig('%s/%s.pdf' % (path, fname))
