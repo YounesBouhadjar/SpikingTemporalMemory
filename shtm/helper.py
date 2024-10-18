@@ -28,6 +28,7 @@ import os
 import sys
 import copy
 import hashlib
+import getpass
 import numpy as np
 from pathlib import Path
 from pprint import pformat
@@ -327,13 +328,13 @@ def get_data_path(pars, ps_label='', add_to_path=''):
     -------
     data_path : Pathlib instantiation  
     """
-
     try:
         home = pars['home']
     except:
         #home = '../..'
         #home = Path.home()
-        home = '/work/users/bouhadjar'
+        username = getpass.getuser()
+        home = f'/work/users/{username}'
 
     data_path = Path(home, pars['data_root_path'],
                      pars['project_name'],
@@ -771,7 +772,7 @@ def get_state_matrix(somatic_spikes,
 
                 x[senders_soma-1, k] = 1
                 tg = np.zeros(params['task']['vocabulary_size'])
-                tg[ele-1] = 1 
+                tg[ele-1] = 1
                 ls.append(tg)
 
             #acc_seq += len(seq)
