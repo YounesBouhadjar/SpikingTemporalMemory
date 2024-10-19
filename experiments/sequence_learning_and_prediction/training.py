@@ -36,6 +36,7 @@ import argparse
 import numpy as np
 from pprint import pformat
 from argparse import ArgumentParser
+sys.path.append('../../')
 from shtm import model, helper
 import sequence_generator as sg
 
@@ -376,8 +377,9 @@ if __name__ == '__main__':
     loss_all = []
     fp_all = []
     fn_all = []
-    for i in range(3):
+    for i in range(1):
         print("Experiment", i)
+        nest.ResetKernel()
         loss, fp, fn = generate_reference_data(i)
         loss_all.append(loss)
         fp_all.append(fp)

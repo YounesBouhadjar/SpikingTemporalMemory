@@ -124,7 +124,7 @@ class Model:
         """Initializes the NEST kernel.
         """
 
-        nest.ResetKernel()
+        #nest.ResetKernel()
         nest.SetKernelStatus({
             'resolution': self.params['dt'],
             'print_time': self.params['print_simulation_progress'],
