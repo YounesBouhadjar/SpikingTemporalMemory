@@ -58,16 +58,15 @@ def create_parser():
     return parser_
 
 
-def generate_reference_data(arr_id=None):
+def generate_reference_data(PS, arr_id=None):
 
     parser = create_parser()
     args, unparsed = parser.parse_known_args()
+    plot_task = False
 
     #############################################################
     # get network and training parameters 
     # ===========================================================
-    #PS = model.get_parameters()
-    PS = __import__(args.exp_params.split(".")[0]).p
 
     # parameter-set id from command line (submission script)
     PL = helper.parameter_set_list(PS) 
@@ -135,8 +134,8 @@ def generate_reference_data(arr_id=None):
 #        S = int(2*R)                                             # number of sequences
 #        C = int(O+2)                                             # sequence length
 #    else:
-    S = int(params['task']['S'])                             # number of sequences
-    C = int(params['task']['C'])                             # sequence length
+    S = int(params['task']['S'])                                  # number of sequences
+    C = int(params['task']['C'])                                  # sequence length
 
     start = 100.
     stop = 5000.
@@ -201,7 +200,7 @@ def generate_reference_data(arr_id=None):
     # convert sequence set instance to element activation times
     element_activations = sg.seq_set_instance_gdf(seq_set_instance)
 
-    if False:
+    if plot_task:
         import matplotlib.pyplot as plt
 
         plt.rcParams.update({'font.size': 8})
@@ -225,17 +224,7 @@ def generate_reference_data(arr_id=None):
         plt.setp(plt.gca(),yticks = vocabulary)
         
         plt.subplots_adjust(left=0.13, right=0.95, bottom=0.15, top=0.95)
-        plt.savefig('example_sequence_set_instance.pdf')
-
-        exit()
-
-    #params['M'] = len(vocabulary)
- 
-    #seq_set_transformed = [['B', 'C', 'E', 'F', 'B', 'C', 'E', 'C', 'F', 'B', 'C', 'E'], ['B', 'C', 'E', 'C', 'F', 'B', 'C', 'E', 'D', 'E', 'F', 'B']]
-    #seq_set_transformed = [['A', 'D', 'D', 'E'], ['B', 'D', 'D', 'F']]
-    #seq_set_transformed = [['A', 'D', 'B', 'E'], ['C', 'D', 'B', 'F']]
-    #seq_set_transformed = [['A', 'D'], ['B', 'D']]
-    #vocabulary_transformed = ['A', 'B', 'C', 'D', 'E', 'F']
+        plt.savefig('sequence_set_instance.pdf')
 
     if params['store_training_data']:
         fname = 'training_data'
@@ -310,56 +299,14 @@ def generate_reference_data(arr_id=None):
         # load spikes from reference data
         somatic_spikes = helper.load_numpy_spike_data(data_path, 'somatic_spikes')
 
+        #TODO implement loss function
+
         wandb.finish()
         exit()
 
-        idend_eval = helper.load_numpy_spike_data(data_path, 'idend_eval')
-        excitation_times = helper.load_data(data_path, 'excitation_times')
+        wandb.log({"loss"+str(arr_id): loss})
 
-        # get recoding times of dendriticAP
-        idend_recording_times = helper.load_data(data_path, 'idend_recording_times')
-        characters_to_subpopulations = helper.load_data(data_path, 'characters_to_subpopulations')
-
-        seq_avg_errors, seq_avg_false_positives, seq_avg_false_negatives, _ = helper.compute_prediction_performance(somatic_spikes, 
-                                                                                                                    idend_eval, 
-                                                                                                                    idend_recording_times, 
-                                                                                                                    characters_to_subpopulations, 
-                                                                                                                    model_instance.sequences, 
-                                                                                                                    model_instance.params)
-
-        # get number of active neuron for each element in the sequence
-        number_elements_per_batch = sum([len(seq) for seq in model_instance.sequences])
-        start_time = excitation_times[-number_elements_per_batch] - 5 
-        end_time = excitation_times[-1] + 5
-
-        idx_times = np.where((np.array(excitation_times) > start_time) & (np.array(excitation_times) < end_time))  
-        excitation_times_sel = np.array(excitation_times)[idx_times]
-
-        num_active_neurons = helper.number_active_neurons_per_element(model_instance.sequences, 
-                                                                      somatic_spikes[:,1], 
-                                                                      somatic_spikes[:,0], 
-                                                                      excitation_times_sel, 
-                                                                      params['fixed_somatic_delay'])
-
-        print("\n##### testing sequences with number of somatic spikes ")
-        count_false_negatives = 0
-        for i, (sequence, seq_counts) in enumerate(zip(model_instance.sequences, num_active_neurons)): 
-            seq = ''
-            for j, (char, counts) in enumerate(zip(sequence, seq_counts)):
-                seq += str(char)+'('+ str(counts)+')'.ljust(2)
-
-                if j != 0 and counts > 0.5*params['n_E']:
-                    count_false_negatives += 1
-
-            print("sequence %d: %s" % (i, seq))   
-
-        print("False negative counts", count_false_negatives)   
-
-        wandb.log({"loss"+str(arr_id): seq_avg_errors[-1],
-                   "fp"+str(arr_id): seq_avg_false_positives[-1],
-                   "fn"+str(arr_id): seq_avg_false_negatives[-1]})
-
-        return seq_avg_errors[-1], seq_avg_false_positives[-1], seq_avg_false_negatives[-1]
+        return loss
 
 
     wandb.finish()
@@ -372,23 +319,20 @@ def generate_reference_data(arr_id=None):
     print("number of learning episodes: %d" % params['learning_episodes'])
 
 if __name__ == '__main__':
+
+    PS = __import__(args.exp_params.split(".")[0]).p
+
     # generate_reference_data()
     loss_all = []
     fp_all = []
     fn_all = []
-    for i in range(3):
+    # go consecutively through the seed to compute an averaged loss
+    # to be logged in and used by the hyperparameter search of wandb
+    for i in range(len(PS['seed'])):
         print("Experiment", i)
-        loss, fp, fn = generate_reference_data(i)
+        loss = generate_reference_data(PS, i)
         loss_all.append(loss)
-        fp_all.append(fp)
-        fn_all.append(fn)
 
     loss = sum(loss_all) / len(loss_all)
-    fp = sum(fp_all) / len(fp_all)
-    fn = sum(fn_all) / len(fn_all)
-    fpn = fp + fn
 
-    wandb.log({"loss": loss,
-               "fp": fp,
-               "fn": fn,
-               "fpn": fpn})
+    wandb.log({"loss": loss})
