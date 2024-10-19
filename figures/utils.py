@@ -2,6 +2,7 @@ import os
 import sys
 import copy
 import hashlib
+import getpass
 import numpy as np
 import parameters as para
 import matplotlib.pyplot as plt
@@ -648,7 +649,8 @@ def get_data_path(pars, ps_label='', add_to_path=''):
     except:
         #home = '..'
         #home = Path.home()
-        home = '/work/users/bouhadjar'
+        username = getpass.getuser()
+        home = f'/work/users/{username}'
 
     data_path = Path(home, pars["data_root_path"],
                      pars["project_name"],

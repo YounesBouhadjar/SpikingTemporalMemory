@@ -36,6 +36,7 @@ import argparse
 import numpy as np
 from pprint import pformat
 from argparse import ArgumentParser
+sys.path.append('../../')
 from shtm import model, helper
 import sequence_generator as sg
 
@@ -330,6 +331,7 @@ if __name__ == '__main__':
     # to be logged in and used by the hyperparameter search of wandb
     for i in range(len(PS['seed'])):
         print("Experiment", i)
+        nest.ResetKernel()
         loss = generate_reference_data(PS, i)
         loss_all.append(loss)
 
