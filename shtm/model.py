@@ -57,7 +57,7 @@ class Model:
     In addition, each model may implement other model-specific member functions.
     """
 
-    def __init__(self, params, seq_set_instances, seq_set_instance_size, vocabulary):
+    def __init__(self, params, seq_set, seq_set_instances, seq_set_instance_size, vocabulary):
         """Initialize model and simulation instance, including
 
         1) parameter setting,
@@ -106,6 +106,7 @@ class Model:
         # input stream: sequence data
         self.seq_set_instances = seq_set_instances
         self.seq_set_instance_size = seq_set_instance_size
+        self.seq_set = seq_set
 
         self.vocabulary = vocabulary
         self.vocab_size = len(vocabulary)
@@ -212,7 +213,6 @@ class Model:
         # the simulation time is set during the creation of the network  
         if nest.Rank() == 0:
             print('\nSimulating {} ms.'.format(self.sim_time))
-  
         nest.Simulate(self.sim_time)
 
         # record somatic spikes
@@ -455,6 +455,7 @@ class Model:
         somatic_spikes = helper.load_numpy_spike_data(self.data_path, 'somatic_spikes')
 
         state_matrix_soma, labels = helper.get_state_matrix(somatic_spikes,
+                                                            self.seq_set,
                                                             self.seq_set_instances,
                                                             self.seq_set_instance_size,
                                                             self.params,
@@ -472,8 +473,9 @@ class Model:
         # create new Readout for each subtask
         readout = Readout(f"readout-offline-prediction", r_params, rng)
 
-        ls = np.array(labels[0])
-        readout.train("batch_label", state_matrix[0], ls)
+        for i in range(len(labels)):
+            ls = np.array(labels[i])
+            readout.train("batch_label", state_matrix[i], ls)
 
         performance = readout.evaluate(process_output_method="k-WTA",
                                        symbolic=True,

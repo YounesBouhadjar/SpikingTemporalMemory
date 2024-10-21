@@ -61,8 +61,6 @@ def create_parser():
 
 def generate_reference_data(PS, arr_id=None):
 
-    parser = create_parser()
-    args, unparsed = parser.parse_known_args()
     plot_task = False
 
     #############################################################
@@ -244,6 +242,7 @@ def generate_reference_data(PS, arr_id=None):
     # ===============================================================
     params['M'] = len(vocabulary_transformed)
     model_instance = model.Model(params,
+                                 seq_set,
                                  seq_set_instance,
                                  seq_set_instance_size,
                                  vocabulary_transformed)
@@ -320,6 +319,9 @@ def generate_reference_data(PS, arr_id=None):
     print("number of learning episodes: %d" % params['learning_episodes'])
 
 if __name__ == '__main__':
+
+    parser = create_parser()
+    args, unparsed = parser.parse_known_args()
 
     PS = __import__(args.exp_params.split(".")[0]).p
 

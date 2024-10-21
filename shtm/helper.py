@@ -717,11 +717,12 @@ def homeostasis_contribution(hs, Wmax=1, r_d=0, r_t=1):
 
 #################################################
 def get_state_matrix(somatic_spikes,
+                     seq_set,
                      seq_set_instances,
                      seq_set_instance_size,
                      params,
                      mode='train',
-                     debug=False):
+                     debug=True):
     """
     compute state matrix
 
@@ -748,13 +749,18 @@ def get_state_matrix(somatic_spikes,
 
     end_iterations = 0
 
+    len_seqs = sum([len(seq_set[i]) for i in range(len(seq_set))])
+    print("seq_set", seq_set)
+
     for q in range(seq_set_instance_size):
 
         # initialize state matrix
-        length_seqs = len(seq_set_instances[q]['elements'])
+        len_seq = len(seq_set_instances[q]['elements'])
+        seq_id = seq_set_instances[q]['seq']
+        len_cur_seq = sum([len(seq_set[i]) for i in range(len(seq_set)) if i < int(seq_id)])
 
         if len(somatic_spikes[0]) != 0:
-            x = np.zeros((params['n_E']*params['M'], length_seqs))
+            x = np.zeros((params['M']*params['n_E'], len_seq))
             times_somatic_spikes = somatic_spikes[:, 1]
             senders_somatic_spikes = somatic_spikes[:, 0]
             # for each sequence in the test sequences
@@ -771,8 +777,8 @@ def get_state_matrix(somatic_spikes,
                 senders_soma = np.array(senders_somatic_spikes[indices_soma], int)
 
                 x[senders_soma-1, k] = 1
-                tg = np.zeros(params['task']['vocabulary_size'])
-                tg[ele-1] = 1
+                tg = np.zeros(len_seqs)
+                tg[len_cur_seq+k] = 1
                 ls.append(tg)
 
             #acc_seq += len(seq)

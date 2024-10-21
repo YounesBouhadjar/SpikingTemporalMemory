@@ -220,6 +220,7 @@ def generate_reference_data(arr_id=None):
     # ===============================================================
     params['M'] = len(vocabulary_transformed)
     model_instance = model.Model(params,
+                                 seq_set,
                                  seq_set_instance,
                                  seq_set_instance_size,
                                  vocabulary_transformed)
