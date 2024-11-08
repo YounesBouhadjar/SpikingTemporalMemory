@@ -55,7 +55,8 @@ def create_parser():
     parser_.add_argument("--batch-id", dest="batch_idx", type=int, default=0)
     parser_.add_argument("--jobmax", dest="jobmax", type=int, default=0)
     parser_.add_argument("--hwb", dest="run_hwb", type=bool, default=False, help="enabled if hyperparameter search is executed")
-    parser_.add_argument("--wbm", dest="wb_mode", type=str, default="offline")
+    #parser_.add_argument("--wbm", dest="wb_mode", type=str, default="offline")
+    parser_.add_argument("--wbm", dest="wb_mode", type=str, default="online")
     return parser_
 
 
@@ -91,10 +92,10 @@ def generate_reference_data(PS, arr_id=None):
         params['syn_dict_ee']['tau_perm'] = wandb.config['tau_perm']
         params['syn_dict_ee']['lambda_minus'] = wandb.config['lambda_minus']
         params['syn_dict_ee']['lambda'] = wandb.config['lambda']
-        params['task']['S'] = wandb.config['S']
-        params['task']['C'] = wandb.config['C']
-        params['task']['R'] = wandb.config['R']
-        params['task']['O'] = wandb.config['O']
+        #params['task']['S'] = wandb.config['S']
+        #params['task']['C'] = wandb.config['C']
+        #params['task']['R'] = wandb.config['R']
+        #params['task']['O'] = wandb.config['O']
 
         params['label'] = hashlib.md5(pformat(dict(params)).encode('utf-8')).hexdigest()
 
@@ -137,8 +138,8 @@ def generate_reference_data(PS, arr_id=None):
     C = int(params['task']['C'])                                  # sequence length
 
     start = 100.
-    stop = 5000.
-    seq_set_instance_size = 10
+    stop = 20000.
+    seq_set_instance_size = 200
     subset_size           = None
     #order                 = 'fixed'      ## 'fixed', 'random'
     order                 = 'random'      ## 'fixed', 'random'    
@@ -196,6 +197,10 @@ def generate_reference_data(PS, arr_id=None):
         inter_seq_intv_max    = inter_seq_intv_max,
     )
 
+    sim_time = seq_set_instance[max(seq_set_instance.keys())]['times'][-1]
+    num_last_instance = max(seq_set_instance.keys())
+    print('\nNumber and time of last element in last sequence instance:', num_last_instance, sim_time)
+
     # convert sequence set instance to element activation times
     element_activations = sg.seq_set_instance_gdf(seq_set_instance)
 
@@ -207,20 +212,30 @@ def generate_reference_data(PS, arr_id=None):
         plt.clf()
 
         ylim = (vocabulary[0],vocabulary[-1])
-        sg.plot_seq_instance_intervals(seq_set,seq_ids,seq_set_instance,ylim,alpha=0.1,cm='jet')    
+        sg.plot_seq_instance_intervals(seq_set,seq_ids,
+                                       seq_set_instance,
+                                       ylim,
+                                       alpha=0.1,
+                                       cm='jet')    
 
         colormap = plt.get_cmap('jet')
         colors = [colormap(k) for k in np.linspace(0, 1, len(seq_set))]    
         for cs in range(len(seq_set_instance)):
             clr = colors[seq_ids[cs]]
-            plt.plot(seq_set_instance[cs]['times'],seq_set_instance[cs]['elements'],'o',ms=3,mfc=clr,mew=0.5,mec='k',rasterized=True)
-            plt.text(seq_set_instance[cs]['times'][0],vocabulary[-1]+1,r"%d" % seq_ids[cs],fontsize=5)
+            plt.plot(seq_set_instance[cs]['times'],
+                     seq_set_instance[cs]['elements'],
+                     'o', ms=3, mfc=clr, mew=0.5, 
+                     mec='k', rasterized=True)
+            plt.text(seq_set_instance[cs]['times'][0],vocabulary[-1]+1,r"%d" % seq_ids[cs],
+                     fontsize=5)
         plt.xlabel(r'time (ms)')
         plt.ylabel(r'element ID')
         plt.xlim(0,stop)
-        plt.ylim(vocabulary[0]-0.5,vocabulary[-1]+2)
+        plt.ylim(vocabulary[0]-0.5,
+                 vocabulary[-1]+2)
 
-        plt.setp(plt.gca(),yticks = vocabulary)
+        plt.setp(plt.gca(),
+                 yticks = vocabulary)
         
         plt.subplots_adjust(left=0.13, right=0.95, bottom=0.15, top=0.95)
         plt.savefig('sequence_set_instance.pdf')
@@ -232,6 +247,7 @@ def generate_reference_data(PS, arr_id=None):
         print("\nSave training data to %s/%s" % (data_path, fname))
         os.makedirs('%s/%s' % (data_path, params['label']), exist_ok=True)
         np.save('%s/%s/%s' % (data_path, params['label'], fname), seq_set_transformed)
+        np.save('%s/%s/%s' % (data_path, params['label'], 'seq_set_instance'), seq_set_instance)
         np.save('%s/%s/%s' % (data_path, params['label'], fname_voc), vocabulary_transformed)
 
     #sequences, _, vocabulary = helper.generate_sequences(params['task'], params['data_path'], params['label'])
@@ -243,8 +259,6 @@ def generate_reference_data(PS, arr_id=None):
     params['M'] = len(vocabulary_transformed)
     model_instance = model.Model(params,
                                  seq_set,
-                                 seq_set_instance,
-                                 seq_set_instance_size,
                                  vocabulary_transformed)
     time_model = time.time()
 
@@ -264,7 +278,7 @@ def generate_reference_data(PS, arr_id=None):
     # ###############################################################
     # simulate the network
     # ===============================================================
-    model_instance.simulate()
+    model_instance.simulate(stop+10.)
     time_simulate = time.time()
 
     # store connections after learning
@@ -292,21 +306,17 @@ def generate_reference_data(PS, arr_id=None):
 
     # display prediction performance only for debugging    
     if params['evaluate_performance']:
+
+        exp_seq_set_instance_size = max(seq_set_instance.keys())
+        xt, labels = model_instance.load_resampled_data(seq_set_instance,
+                                                        exp_seq_set_instance_size)
+
+        acc, mse = model_instance.train_readout(xt, labels)
     
-        data_path = helper.get_data_path(model_instance.params['data_path'],
-                                         model_instance.params['label'])
+        wandb.log({"mse"+str(arr_id): mse,
+                   "acc"+str(arr_id): acc})
 
-        # load spikes from reference data
-        somatic_spikes = helper.load_numpy_spike_data(data_path, 'somatic_spikes')
-
-        #TODO implement loss function
-
-        wandb.finish()
-        exit()
-
-        wandb.log({"loss"+str(arr_id): loss})
-
-        return loss
+        return acc, mse
 
 
     wandb.finish()
@@ -326,17 +336,19 @@ if __name__ == '__main__':
     PS = __import__(args.exp_params.split(".")[0]).p
 
     # generate_reference_data()
-    loss_all = []
-    fp_all = []
-    fn_all = []
+    mse_all = []
+    acc_all = []
     # go consecutively through the seed to compute an averaged loss
     # to be logged in and used by the hyperparameter search of wandb
     for i in range(len(PS['seed'])):
         print("Experiment", i)
         nest.ResetKernel()
-        loss = generate_reference_data(PS, i)
-        loss_all.append(loss)
+        acc, mse = generate_reference_data(PS, i)
+        acc_all.append(acc)
+        mse_all.append(mse)
 
-    loss = sum(loss_all) / len(loss_all)
+    acc = sum(acc_all) / len(acc_all)
+    mse = sum(mse_all) / len(mse_all)
 
-    wandb.log({"loss": loss})
+    wandb.log({"mse": mse,
+               "acc": acc})

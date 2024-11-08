@@ -166,66 +166,29 @@ def generate_reference_data(arr_id=None):
     alphabet = sg.latin_alphabet                       # function defining type of alphabet (only important for printing)
    
     ####################    
+    label = params['label']
+    params_path = helper.get_data_path(params['data_path'])
+    seq_set = helper.load_data(params_path,  f'{label}/training_data')
+    seq_set_instance = helper.load_data(params_path,  f'{label}/seq_set_instance')
+    vocabulary_transformed = helper.load_data(params_path,  f'{label}/vocabulary')
     
-    print("Generate sequences ...")
-    seq_set, shared_seq_set, vocabulary, seq_set_intervals = sg.generate_sequences(S, C, R, O,
-                                                                                   vocabulary_size,
-                                                                                   minimal_prefix_length,
-                                                                                   minimal_postfix_length,
-                                                                                   seed,
-                                                                                   redraw)
-    shared_seq_set_transformed = sg.transform_sequence_set(shared_seq_set, alphabet)    
-    seq_set_transformed = sg.transform_sequence_set(seq_set, alphabet)
-    vocabulary_transformed = sg.transform_sequence(vocabulary, alphabet)
-
-    sg.print_sequences(seq_set_transformed,
-                       shared_seq_set_transformed,
-                       vocabulary_transformed,
-                       seq_set_intervals,
-                       label=' (latin)')
-
-    print("Generate sequence instance ...")
-    seq_set_instance, seq_ids = sg.generate_sequence_set_instance(
-        seq_set,
-        seq_set_intervals,
-        start=start,
-        stop=stop,
-        seq_set_instance_size = seq_set_instance_size,
-        subset_size           = subset_size,
-        order                 = order,
-        seq_activation_type   = seq_activation_type,
-        inter_seq_intv_min    = inter_seq_intv_min,
-        inter_seq_intv_max    = inter_seq_intv_max,
-    )
-
-    # convert sequence set instance to element activation times
-    element_activations = sg.seq_set_instance_gdf(seq_set_instance)
-
-    if params['store_training_data']:
-        fname = 'training_data'
-        fname_voc = 'vocabulary'
-        data_path = helper.get_data_path(params['data_path'])
-        print("\nSave training data to %s/%s" % (data_path, fname))
-        os.makedirs('%s/%s' % (data_path, params['label']), exist_ok=True)
-        np.save('%s/%s/%s' % (data_path, params['label'], fname), seq_set_transformed)
-        np.save('%s/%s/%s' % (data_path, params['label'], fname_voc), vocabulary_transformed)
-
     #sequences, _, vocabulary = helper.generate_sequences(params['task'],
     #                                                     params['data_path'],
     #                                                     params['label'])
-    print(f"\n vocabulary_size {len(vocabulary_transformed)}, R={R}, O={O}, S={S}, C={C}")
+    #print(f"\n vocabulary_size {len(vocabulary_transformed)}, R={R}, O={O}, S={S}, C={C}")
 
     # ###############################################################
     # load resampled data
     # ===============================================================
-    params['M'] = len(vocabulary_transformed)
+    #params['M'] = len(vocabulary_transformed)
+    #print('\nseq_set_instance:', seq_set_instance)
     model_instance = model.Model(params,
                                  seq_set,
-                                 seq_set_instance,
-                                 seq_set_instance_size,
                                  vocabulary_transformed)
 
-    xt, labels = model_instance.load_resampled_data()
+    seq_set_instance_size = max(seq_set_instance.keys())
+    xt, labels = model_instance.load_resampled_data(seq_set_instance,
+                                                    seq_set_instance_size)
 
     acc = model_instance.train_readout(xt, labels)
 
