@@ -722,7 +722,7 @@ def get_state_matrix(somatic_spikes,
                      seq_set_instance_size,
                      params,
                      mode='train',
-                     debug=True):
+                     debug=False):
     """
     compute state matrix
 

@@ -14,7 +14,7 @@ p['data_path']['parameterspace_label'] = 'sequence_learning_and_prediction_task_
 
 # parameters for setting up the network  
 p['M'] = 16                  # number of subpopulations. Note that we use here 6 subpopulations rather than 14 (see Bouhadjar et al. 2022). This is just because we would like to accelerate the simulation, as the set of sequences in this specific experiment requires the use of only 6 subpopulations. We use M=14 in other experiments with more complex tasks such in the prediction performance experiments.
-p['n_E'] = 166 #300          # number of excitatory neurons per subpopulation
+p['n_E'] = 206 #166 #300          # number of excitatory neurons per subpopulation
 p['n_I'] = 1                 # number of inhibitory neurons per subpopulation
 p['L'] = 1                   # number of subpopulations that represents one sequence element
 p['pattern_size'] = 20       # sparse set of active neurons per subpopulation
@@ -72,17 +72,17 @@ p['syn_dict_ee']['weight'] = 0.                      # synaptic weight
 p['syn_dict_ee']['delay'] = 2.0
 p['syn_dict_ee']['synapse_model'] = 'stdsp_synapse'  # synapse model
 p['syn_dict_ee']['th_perm'] = 10.                    # synapse maturity threshold
-p['syn_dict_ee']['tau_perm'] = 50000. #75558. #18500.                # time constant of permanence leakage
+p['syn_dict_ee']['tau_perm'] = 24299.825 #50000. #75558. #18500.                # time constant of permanence leakage
 p['syn_dict_ee']['tau_tr_pre'] = 20.                 # plasticity time constant (potentiation)
 p['syn_dict_ee']['tau_tr_post'] = 20. 
 p['syn_dict_ee']['receptor_type'] = 2                # receptor corresponding to the dendritic input
-p['syn_dict_ee']['lambda'] = 0.25 #616                    # potentiation rate
+p['syn_dict_ee']['lambda'] = 0.2106#0.25 #616                    # potentiation rate
 p['syn_dict_ee']['mu_plus'] = 0.                     # permanence dependence exponent, potentiation
 # p['syn_dict_ee']['mu_minus'] = 0.                  # permanence dependence exponent, depression
 p['syn_dict_ee']['Wmax'] = 1.1 * p['soma_params']['theta_dAP'] / p['convergence']   # Maximum allowed weight
 p['syn_dict_ee']['Pmax'] = 20.                       # Maximum allowed permanence
 p['syn_dict_ee']['Pmin'] = 1.                        # Minimum allowed permanence
-p['syn_dict_ee']['lambda_minus'] = 9.63e-05          # depression rate
+p['syn_dict_ee']['lambda_minus'] = 0.000332#9.63e-05          # depression rate
 p['syn_dict_ee']['dt_min'] = 4.                     # minimum time lag of the STDP window
 p['inh_factor'] = 7.
 p['p_target'] = 0
@@ -148,10 +148,10 @@ p['active_weight_recorder'] = False            # if turned on, the weights are r
 # task parameters
 p['task'] = {}
 p['task']['vocabulary_size'] = 16                 # vocabulary size
-p['task']['S'] = 4                               # number of sequences
-p['task']['C'] = 8                               # sequence length
+p['task']['S'] = 2                               # number of sequences
+p['task']['C'] = 5                               # sequence length
 p['task']['R'] = 1#para.ParameterRange(np.arange(2,6+2,2))                              # number of shared subsequences
-p['task']['O'] = 6#para.ParameterRange(np.arange(2,8+2,2))                              # length of shared subsequences ("order")
+p['task']['O'] = 3#para.ParameterRange(np.arange(2,8+2,2))                              # length of shared subsequences ("order")
 p['task']['seed'] = 0                             # seed number
 
 # setup the training loop  
