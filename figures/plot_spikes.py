@@ -19,7 +19,7 @@ PS, PS_path = utils.get_parameter_set(path_dict)
 PL = utils.parameter_set_list(PS)
 params = PL[0]
 label = params['label']
-replay = True
+replay = False
 
 # get trained sequences
 sequences = load_data(PS_path,  f'{label}/training_data')
@@ -42,27 +42,31 @@ print('data path', data_path)
 
 # load spikes from reference data
 somatic_spikes = load_numpy_spike_data(data_path, 'somatic_spikes')
-dendritic_current = load_numpy_spike_data(data_path, 'idend_last_episode')
+
+try:
+    dendritic_current = load_numpy_spike_data(data_path, 'idend_last_episode')
+except:
+    dendritic_current = [[]]
 #dendritic_current = load_numpy_spike_data(data_path, 'idend_eval')
 
 # get recoding times of dendriticAP
-characters_to_subpopulations = load_data(data_path, 'characters_to_subpopulations')
+#characters_to_subpopulations = load_data(data_path, 'characters_to_subpopulations')
 
 # get excitation times
-excitation_times = load_data(data_path, 'excitation_times')
+#excitation_times = load_data(data_path, 'excitation_times')
 
 # organize the characters for plotting purpose
-subpopulation_indices = []
-chars_per_subpopulation = []
-for char in vocabulary:
-    # shift the subpopulation indices for plotting purposes 
-    char_to_subpopulation_indices = characters_to_subpopulations[char]
-    subpopulation_indices.extend(char_to_subpopulation_indices)
-
-    chars_per_subpopulation.extend(char * len(characters_to_subpopulations[char]))
-
-shifted_subpopulation_indices = np.array(subpopulation_indices) + 0.5
-
+#subpopulation_indices = []
+#chars_per_subpopulation = []
+#for char in vocabulary:
+#    # shift the subpopulation indices for plotting purposes 
+#    char_to_subpopulation_indices = characters_to_subpopulations[char]
+#    subpopulation_indices.extend(char_to_subpopulation_indices)
+#
+#    chars_per_subpopulation.extend(char * len(characters_to_subpopulations[char]))
+#
+#shifted_subpopulation_indices = np.array(subpopulation_indices) + 0.5
+#
 # plot settings 
 plt.rcParams['font.size'] = 8
 plt.rcParams['legend.fontsize'] = 6
@@ -82,10 +86,10 @@ if replay:
     end_time = excitation_times[number_elements_per_batch] + 100. 
 else:
     #number_elements_per_batch = len(sequences) * len(sequences[0])
-    number_elements_per_batch = 2 * len(sequences[0])
+    number_elements_per_batch = len(sequences) * len(sequences[0])
     #start_time = excitation_times[-number_elements_per_batch] 
-    start_time = excitation_times[-number_elements_per_batch] 
-    end_time = excitation_times[-1] + 10
+    start_time = 19500. #excitation_times[-number_elements_per_batch] 
+    end_time = 20000. #excitation_times[-1] + 10
 
 utils.plot_spikes(somatic_spikes, [[]],
                   dendritic_current,
@@ -95,11 +99,11 @@ utils.plot_spikes(somatic_spikes, [[]],
                   params['M']*params['n_E'],
                   params['M'])
 
-ticks_pos = shifted_subpopulation_indices * params['n_E']
-ticks_label = chars_per_subpopulation
+#ticks_pos = shifted_subpopulation_indices * params['n_E']
+#ticks_label = chars_per_subpopulation
 subpopulation_indices_background = np.arange(params['M'])*params['n_E']
 
-plt.yticks(ticks_pos, ticks_label)
+#plt.yticks(ticks_pos, ticks_label)
 
 for i in range(params['M'])[::2]:
     plt.axhspan(subpopulation_indices_background[i],
