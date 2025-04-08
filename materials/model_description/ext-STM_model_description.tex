@@ -1,0 +1,694 @@
+\documentclass[10pt,a4paper,twoside,american]{article}
+\usepackage{geometry}
+\geometry{verbose,a4paper,tmargin=2cm,bmargin=2cm,lmargin=2cm,rmargin=2cm}
+\usepackage{authblk}
+\usepackage{calc}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\definecolor{shadecolor}{gray}{0.9}
+\usepackage{natbib} 
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{algorithmic}
+
+\usepackage[%%
+breaklinks=true,
+colorlinks=true,
+linkcolor=gray,citecolor=gray,urlcolor=gray,filecolor=gray,
+pdffitwindow,
+bookmarks=true,
+bookmarksopen=true,
+bookmarksnumbered=true,
+pdftitle={},
+pdfauthor={},
+pdfsubject={},
+pdfkeywords={}
+]
+{hyperref}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% change tracking
+\usepackage{changes} %% see documentation @ https://ctan.org/pkg/changes
+%% define authors and their colors
+\definecolor{YB}{RGB}{0,0,200}
+\definecolor{TT}{RGB}{0,200,0}
+\definecolor{DW}{RGB}{200,0,0}
+\definechangesauthor[color=YB]{YB}
+\definechangesauthor[color=TT]{TT}
+\definechangesauthor[color=DW]{DW}
+
+\newcommand{\note}[2][]{\added[#1]{\footnotesize\it[#2]}} %% add \note command for notes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% crosslinks
+\usepackage{cleveref}
+\crefformat{equation}{(#1)}
+\crefformat{figure}{Fig.\,#1}
+\crefformat{section}{Sec.\,#1}
+\crefformat{table}{Tab.\,#1}
+
+\usepackage[]{float}
+\restylefloat{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% NEURON specific formating (see author guidelines: https://www.cell.com/neuron/authors)
+\renewcommand\familydefault{cmss}      %% NEURON is using sans-serif fonts
+\renewcommand{\abstractname}{Summary}  %% abstract is called Summary 
+
+\def\figdir{figures}
+
+%% macros
+\newcommand{\panel}[3]{%         
+  \parbox[t]{2ex}{\textbf{#1}\,}
+  \parbox[t]{#2}{\,\includegraphics[width=#2]{#3}}
+}
+\newcommand{\pluseq}{\mathrel{+}=}
+\newcommand{\subseq}{\mathrel{-}=}
+\newcommand*{\ie}{i.e.}
+\newcommand*{\eg}{e.g.}
+\newcommand*{\etc}{etc.}
+\newcommand*{\etal}{{et al.}}
+\newcommand*{\cf}{{cf.}}
+\newcommand*{\ca}{c.}
+\newcommand*{\vs}{vs}
+\newcommand*{\amp}{\&}
+\newcommand*{\bd}{\hspace{0pt}}%
+\providecommand*{\urlalt}{\href}
+\newcommand{\wmin}{w_\text{min}}
+\newcommand*{\iselement}{\in}
+\newcommand*{\whij}{w_{ij}^{\text{ho}}}
+\newcommand*{\synweight}{J}
+\newcommand*{\ADhomeo}{\text{ADH}}
+\newcommand*{\weightextstim}{J_{\text{ext}}}
+\newcommand*{\jitterstar}{\alpha^{*}}
+\newcommand*{\rankstar}{R^{*}}
+\newcommand*{\jitter}{\alpha}
+\newcommand*{\rank}{r}
+\newcommand*{\tobs}{t_{\text{obs}}}
+\newcommand*{\tp}{t_{\text{p}}}
+\newcommand*{\lmax}{\lambda_{\text{max}}}
+\newcommand*{\lmaxADH}{\lambda_{\text{max}_\text{ADH}}}
+\newcommand*{\spikeresponse}{s}
+\newcommand*{\spike}[2][]{{s}^{#1}_{#2}(t)}
+\newcommand*{\lpass}[2][]{{x}^{#1}_{#2}(t)}
+\newcommand*{\pearsoncorrelationcoeff}{C}
+\newcommand*{\spiketrains}{x}
+\newcommand*{\simtimePC}{t_{cc}}
+\newcommand*{\readouttime}{t_\text{obs}}
+\newcommand*{\numstims}{p}
+\newcommand*{\numtemplates}{k}
+\newcommand*{\numtrials}{m}
+\newcommand*{\numneurons}{N}
+\newcommand*{\firingrate}{\nu}
+\newcommand*{\firingrateins}{F}
+\newcommand*{\effweights}{w}
+\newcommand*{\effweightsMat}{W}
+\newcommand*{\flucsgroundstate}{z(t)}
+\newcommand*{\tauht}{\tau}
+\newcommand*{\y}{y}
+\newcommand*{\resetpot}{r}
+\newcommand*{\spikingthr}{\theta}
+\newcommand*{\inputflucs}{\sigma}
+\newcommand*{\inputmean}{\mu}
+\newcommand*{\workingpoint}{*}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% sorted alphabetically
+\newcommand{\CM}{C_\textnormal{m}}    %% membrane time constant
+\newcommand{\CV}{\textnormal{CV}}     %% coefficient of variation
+\newcommand{\dtfilter}{\Delta t_\textnormal{f}}
+\newcommand{\dtpert}{\delta t^*}
+\newcommand{\dtsim}{\Delta t}
+\newcommand{\DS}{\textnormal{DS}}
+\newcommand{\EE}{{\exc\exc}}
+\newcommand{\EI}{{\exc\inh}}
+\newcommand{\EF}{{\exc\textnormal{F}}}
+\newcommand{\exc}{\textnormal{E}}     %% label for ``excitatory''
+\newcommand{\ext}{\textnormal{X}}   %% label for ``external''
+\renewcommand{\exp}{\textnormal{exp}} %% exponential function
+\newcommand{\erf}{\textnormal{erf}} %% error function
+\newcommand{\EW}[2][]{\left\langle{#2}\right\rangle_{#1}}
+\newcommand{\FF}{\textnormal{FF}}     %% Fano factor
+\newcommand{\IE}{{\inh\exc}}
+\newcommand{\II}{{\inh\inh}}
+\newcommand{\Epop}{\mathcal{E}} %% set (hence caligraphic) of excitatory neurons
+\newcommand{\inh}{\textnormal{I}}     %% label for ``inhibitory''
+\newcommand{\Ipop}{\mathcal{I}} %% set (hence caligraphic) of inhibitory neurons
+\newcommand{\Imag}{\textnormal{Im}}
+\newcommand{\PSCamp}{\hat{I}}               %% PSC amplitude (pA)
+\newcommand{\J}{J}                          %% PSP amplitude (mV)
+\newcommand{\JDS}{J_\textnormal{DS}}
+\newcommand{\JSD}{J_\textnormal{SD}}
+\newcommand{\JEF}{J_\textnormal{EF}}
+\newcommand{\JE}{{\J_{\exc}}}
+\newcommand{\JEE}{\J_{\exc\exc}}
+\newcommand{\JEI}{\J_{\exc\inh}}
+\newcommand{\JI}{\J_{\inh}}
+\newcommand{\JIE}{\J_{\inh\exc}}
+\newcommand{\JII}{\J_{\inh\inh}}
+\newcommand{\JX}{\J_\ext}
+\newcommand{\Jfb}{\hat{J}}                   %% synapic weights (in mV) as defined in Fourcaud & Brunel (2002)
+\newcommand{\JfbE}{\Jfb_{\exc}}
+\newcommand{\JfbEE}{\Jfb_{\exc\exc}}
+\newcommand{\JfbEI}{\Jfb_{\exc\inh}}
+\newcommand{\JfbI}{\Jfb_{\inh}}
+\newcommand{\JfbIE}{\Jfb_{\inh\exc}}
+\newcommand{\JfbII}{\Jfb_{\inh\inh}}
+\newcommand{\JfbX}{{\Jfb_\ext}}
+\newcommand{\K}{K}
+\newcommand{\KD}{K_{\textnormal{D}}}
+\newcommand{\KE}{K_{\exc}}
+\newcommand{\KEE}{{K_{\exc\exc}}}
+\newcommand{\KEI}{{K_{\exc\inh}}}
+\newcommand{\KI}{{K_{\inh}}}
+\newcommand{\KIE}{{K_{\inh\exc}}}
+\newcommand{\KII}{{K_{\inh\inh}}}
+\newcommand{\Kinput}{{K^\textnormal{out}_\ext}} %% outdegree of each inpu sources
+\newcommand{\KX}{{K_\ext}} %% number of inputs from external sources (external in-degree)
+\newcommand{\mat}[1]{\bm{#1}}
+\renewcommand{\max}{\textnormal{max}} %% exponential function
+\newcommand{\ms}{\,\textnormal{ms}}
+\newcommand{\muE}{{\mu_\exc}}
+\newcommand{\muI}{{\mu_\inh}}
+\newcommand{\mV}{\,\textnormal{mV}}
+\newcommand{\ND}{{N_{\textnormal{D}}}}
+\newcommand{\NE}{{N_{\exc}}}
+\newcommand{\NI}{{N_{\inh}}}
+\newcommand{\nE}{{n_\exc}}
+\newcommand{\nI}{{n_\inh}}
+\newcommand{\nuE}{\nu_\exc}
+\newcommand{\nuI}{\nu_\inh}
+\newcommand{\nuX}{\nu_\ext}
+\newcommand{\pA}{\,\textnormal{pA}}
+\newcommand{\pert}{\textnormal{pert}}
+\newcommand{\pF}{\,\textnormal{pF}}
+\newcommand{\Real}{\textnormal{Re}}
+\newcommand{\RM}{R_\textnormal{m}}
+\newcommand{\SD}{\textnormal{SD}}
+\newcommand{\seconds}{\,\textnormal{s}}
+\newcommand{\sigmaE}{\sigma_{\exc}}
+\newcommand{\sigmaI}{\sigma_{\inh}}
+\newcommand{\sps}{\,\textnormal{spikes/s}}
+\newcommand{\syn}{\textnormal{s}}
+\newcommand{\taufilter}{\tau_\textnormal{f}}
+\newcommand{\tauM}{\tau_\textnormal{m}}
+\newcommand{\tauR}{\tau_\textnormal{ref}}
+\newcommand{\tauS}{\tau_\syn}
+%\renewcommand{\transp}{^\textnormal{T}}
+\newcommand*{\Var}{\textnormal{Var}}
+\renewcommand{\vec}[1]{\bm{#1}}
+\newcommand{\Vreset}{V_\textnormal{r}}
+\newcommand{\VD}{V_\textnormal{D}}
+\newcommand{\VS}{V_\textnormal{S}}
+\newcommand{\VI}{V_\textnormal{I}}
+\newcommand{\effweight}{w}                   %% synapic weights (in mV) as defined in Fourcaud & Brunel (2002)
+\newcommand{\wE}{\effweight_{\exc}}
+\newcommand{\wEE}{\effweight_{\exc\exc}}
+\newcommand{\wEI}{\effweight_{\exc\inh}}
+\newcommand{\wI}{\effweight_{\inh}}
+\newcommand{\wIE}{\effweight_{\inh\exc}}
+\newcommand{\wII}{\effweight_{\inh\inh}}
+\newcommand{\yreset}{y_\textnormal{r}}
+\newcommand{\ytheta}{y_\theta}
+
+% defining the \BibTeX command - from Oren Patashnik's original BibTeX documentation.
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08emT\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+\begin{document}
+
+\title{Model description:\\{\bf ExtSpikingTM}}
+\author{}
+\date{}
+\maketitle
+\thispagestyle{empty}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Network model}
+\label{sec:suppl_network_model}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}[H]
+\renewcommand{\arraystretch}{1.1}
+%%%%%%%%%%%%%%%%%%%
+\begin{tabular}{|@{\hspace*{1mm}}p{3cm}@{}|@{\hspace*{1mm}}p{12cm}|}
+\hline 
+\multicolumn{2}{|>{\color{white}\columncolor{black}}c|}{\textbf{Summary}}\\
+\hline
+\textbf{Populations} &  excitatory ($\Epop$), inhibitory ($\Ipop$) and external (X) \\
+\hline 
+\textbf{Connectivity} &
+\begin{itemize}
+    \item sparse random connectivity between excitatory neurons (plastic)
+    \item local recurrent connectivity between excitatory and inhibitory neurons (static)
+    % \item excitatory to excitatory ($\EE$): random connection (from soma to the dendritic compartment of other neurons)
+    %\item inhibitory to excitatory ($\EI$): all-to-all (from interneuron to soma).
+    %\item excitatory to inhibitory ($\IE$): all-to-all (from soma to interneuron). 
+    % \item external stimulus to excitatory: connects directly to the soma of excitatory neurons.  
+\end{itemize}
+\\
+\hline
+\textbf{Neuron model} & 
+\begin{itemize}
+\item excitatory neurons: point neuron (LIF) with nonlinear summation of inputs      
+\item inhibitory neurons: point neuron (LIF)
+\end{itemize}
+\\
+\hline 
+\textbf{Synapse model } & additive (linear) exponential postsynaptic currents (PSCs)  \\
+\hline 
+\textbf{Plasticity } &  spike-timing dependent structural plasticity and firing-rate homeostasis in excitatory to excitatory connections
+\\
+\hline
+\end{tabular}
+%%%%%%%%%%%%%%%%%%%
+\caption{Description of the network model (continued on next page).}
+\label{tab:model_description}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% model description table (continued)
+\addtocounter{table}{-1}
+\begin{table}[H]
+%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%% 
+\begin{tabular}{|@{\hspace*{1mm}}p{3cm}@{}|@{\hspace*{1mm}}p{5.95cm}@{}|@{\hspace*{1mm}}p{5.95cm}|}
+\hline 
+\multicolumn{3}{|>{\color{white}\columncolor{black}}c|}{\textbf{Populations}}\\
+\hline
+\multicolumn{3}{|l|}{Ensemble of subpopulations $\{i|i=1, \ldots, M  \}$}\\
+\hline 
+\textbf{Name} & \textbf{Elements} & \textbf{Size}\\
+\hline 
+$\Epop_{i}$ & excitatory neurons in subpopulation $i$ & $n_\exc$ \\
+\hline 
+$\Ipop_{i}$ & inhibitory neurons in subpopulation $i$ & $n_\inh$ \\
+\hline 
+\end{tabular}
+%%%%%%%%%%%%%%%%%%%
+\begin{tabular}{|@{\hspace*{1mm}}p{1.45cm}@{}|@{\hspace*{1mm}}p{1.45cm}@{}|@{\hspace*{1mm}}p{12cm}|}
+\hline 
+\multicolumn{3}{|>{\color{white}\columncolor{black}}c|}{\textbf{Connectivity}}\\
+\hline 
+\textbf{Source} & \textbf{Target} & \textbf{Pattern, same in the parameter table }\\
+\hline 
+$\Epop_{i}$ ($\forall{i}$) & $\Epop_{j}$ ($\forall{j}$) & random, fixed in-degrees $K_\EE$ and delays $d_{\EE}$, plastic weights $J_{\EE, ji}$  ($\EE$ connections) \\
+\hline 
+$\Epop_{i}$ ($\forall{i}$)  & $\Ipop_{i}$ ($\forall{i}$) & all-to-all, fixed delays $d_{\IE}$, fixed weights $J_\IE$ (suprathreshold) ($\IE$ connections) \\
+\hline 
+$\Ipop_{i}$ ($\forall{i}$)& $\Epop_{i}$ ($\forall{i}$)& all-to-all, fixed delays $d_{\EI}$, fixed weights $J_\EI$ ($\EI$ connections) \\
+\hline 
+$\Ipop_{i}$ ($\forall{i}$)& $\Ipop_{i}$ ($\forall{i}$)& none ($\II$ connections) \\
+\hline
+\multicolumn{3}{|l|}{no self-connections (``autapses''), no multiple connections (``multapses'') }\\
+\hline 
+
+\end{tabular}
+%%%%%%%%%%%%%%%%%%%
+\caption{Description of the network model (continued on next page).}
+\label{tab:Model-description} 
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\setcounter{table}{\thetable-1}
+\begin{table}[ht!]
+%%%%%%%%%%%%%%%%%%%
+\begin{tabular}{|@{\hspace*{1mm}}p{3cm}@{}|@{\hspace*{1mm}}p{12cm}|}
+  \hline 
+  \multicolumn{2}{|>{\color{white}\columncolor{black}}c|}{\textbf{Neuron and synapse}}\\
+  %%%%%%%%%%%%%
+  \hline
+  \multicolumn{2}{|>{\columncolor{lightgray}}c|}{
+  \textbf{Excitatory neurons}
+  }\\
+  \hline
+  \textbf{Type} & point neuron (LIF) with nonlinear dendritic input integration \\
+  \hline
+    \textbf{Description} & dynamics of membrane potential $V_{i}(t)$ of neuron $i\in[1,N_\exc]$:                
+               \begin{itemize}
+               \item emission of the $k$th spike of neuron $i$ at time $t_{k}^{i}$ if $V_{i}(t_{k}^{i})\geq\theta$ %and $V_{i}\left(t_{k-1}^{i}\right)\leq\theta$
+               \item subthreshold dynamics:
+                 \begin{equation*}
+                     \tauM\dot{V}_{i} =-V_{i}+\RM\left(I_{\text{X},i}(t) + I_{\text{I},i}(t)  + \sum_{q=1}^{\ND} I_{\text{D},iq}(t) \right)
+                     \quad \forall t \notin \left[t_{k}^{i},\,t_{k}^{i}+\tauR\right)
+                 \end{equation*}
+                 with $I_{\text{D},iq}(t)$ ($q\in[1,\ND]$) the synaptic currents from $\ND$ dendritic branches, $I_{\text{X},i}(t)$ the external input, and $I_{\text{I},i}(t)$ the inhibitory input.
+                  \item resets and refractoriness:
+                  \begin{equation*}
+                     V_{i}(t)=\Vreset
+			  \quad \forall{}k,\ \forall t \in \left[t_{k}^{i},\,t_{k}^{i}+\tauR\right]
+                 \end{equation*}
+               \item  synaptic currents dynamics of $I_{\text{D},iq}$, $I_{\text{X},i}$ and $I_{\text{I},i}$ :
+               \begin{equation*}
+                 \tauS\dot{I}_{i}(t) = -I_{i}(t) + \sum_{j=1}^{N} \J_{ij} \cdot s_j(t)
+               \end{equation*}
+               \item presynaptic spike trains $s_j(t)=\sum_k \delta(t-t_k^j)$
+               \item emission of dAP in dendritic branch $q$ at times $t_{l}^{iq}$:    
+               \begin{equation*}
+                  I_{\text{D},iq}(t) = I_\text{P}\quad  
+                  if \     I_{\text{D},iq}(t_{l}^{iq})\geq\theta_{\text{dend}}\quad 
+                  \forall{}l,\ \forall t \in \left(t_{l}^{iq},\,t_{l}^{iq}+\tau_\text{dend}\right]    
+               \end{equation*}
+               Where $I_\text{p}$ is the current plateau of the dAP with its duration $\tau_\text{dend}$ and activation threshold $\theta_{\text{dend}}$
+                
+               \item dAP rate $\nu_{\text{d}}$:   
+               \begin{equation*}
+                 \tau_\text{d}\dot{\nu}_{\text{d}, i} = -\nu_{\text{d}, i}(t) + d_i(t)
+               \end{equation*}
+               Where $\tau_\text{d}$ is the time constant and $d_i(t)=\sum_i \delta(t-t_l^i)$, which comprises the dAP generation times.        
+   
+              \end{itemize}\\
+  %%%%%%%%%%%%%
+  \hline
+      \multicolumn{2}{|>{\columncolor{lightgray}}c|}{
+    \textbf{Inhibitory neurons}
+  }\\
+  \hline
+  \textbf{Type} & point neuron (LIF) \\
+  % \hline
+  % \textbf{Model } &
+  %                   \begin{itemize}
+  %                   \item excitatory neurons: multi-compartment model with one soma compartment (LIF) and $\ND$ dendritic branches, each described by one compartment (LIF)
+  %                   \item inhibitory neurons: point neuron (LIF)
+
+  %                   \end{itemize}                     
+  %                   \\
+                    \hline
+  \textbf{Description} & dynamics of membrane potential $V_{c}(t)$ of compartment $c$:                 
+                       \begin{itemize}
+                       \item spike emission at time $t_{k}^{c}$ if $V_{c}(t_{k}^{c})\geq\theta$ %and $V_{i}\left(t_{k-1}^{i}\right)\leq\theta$ 
+                       \item subthreshold dynamics: \begin{equation*}\label{eq:1}
+                        \tauM\dot{V}_{c}=-V_{c}+\RM{}I_{c}(t) \quad \forall{}k,\ \forall t \notin \left[t_{k}^{c},\,t_{k}^{c}+\tauR\right) \end{equation*}
+                       \item reset and refractoriness: 
+                         $V_{c}(t)=\Vreset$ \quad $\forall{}k,\ \forall t \in \left(t_{k}^{c},\,t_{k}^{c}+\tauR\right]$  
+                        \item synaptic currents dynamics: 
+                           \begin{equation*}
+                             \tauS\dot{I}_c = -I_c(t) + \sum_{j=1}^{N} \J_{ij}  \cdot s_j(t)
+                           \end{equation*}
+                         
+                         % if for all $k:$ $t\in$$\left(t_{k}^{i},\,t_{k}^{i}+\tau_{ref}\right]$
+                       \end{itemize}
+                     \\
+                  \hline 
+\end{tabular}
+%%%%%%%%%%%%%%%%%%%
+\caption{Description of the network model (continued on next page).}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\setcounter{table}{\thetable-1}
+\begin{table}[ht!]
+  %%%%%%%%%%%%%%%%%%% 
+  \begin{tabular}{|@{\hspace*{1mm}}p{3cm}@{}|@{\hspace*{1mm}}p{12.cm}|}
+  \hline 
+  \multicolumn{2}{|>{\color{white}\columncolor{black}}c|}{\textbf{Plasticity}}\\                      \hline
+  \textbf{EE synapses} &
+                         \begin{itemize}                                                                                        \item spike-timing dependent structural plasticity and firing-rate homeostasis
+                         \item each synapse described by permanence $P_{ij}$ (maturity) and synaptic weight $\J_{\EE, ij}$                                                                                                 
+                         \item update $P_{ij}$ and $J_{\EE, ij}$ at time $t^k$ of the $k$th spike of presynaptic neuron $j$:
+      \begin{algorithmic}
+
+        \STATE  $L_\text{post} \gets$ list of postsynaptic spike times $t^i$ in interval $(t^j_{k-1},t^j_{k}]$      
+        
+        \FOR{$t^i$ in $L_\text{post}$}
+        \STATE $P_{ij} \pluseq \lambda \cdot \exp(- |t^i - t^j_{k-1}|/\tau_{+})$
+        (potentiation)
+        \STATE $P_{ij} \pluseq \kappa \cdot (\nu_\text{d}^* - \nu_\text{d})$ (homeostasis)
+    \ENDFOR           
+    
+    \STATE $P_{ij} \subseq l$  (depression [leak])
+  
+    \IF{$ P_{ij} > P_\text{max} $}
+      \STATE $P_{ij} = P_\text{max}$ (clipping at maximum permanence)
+    \ENDIF
+    
+    \IF {$ P_{ij} > P_{\theta} $} 
+       \STATE $\J_{\EE, ij} \gets W $ (mature synapse)
+    \ELSE
+       \STATE $\J_{\EE, ij} \gets 0 $ (immature synapse)
+    \ENDIF
+  \end{algorithmic}
+  %here, $T_\text{post}$ denotes the spike timings of the postsynaptic neuron. 
+
+\end{itemize}
+
+  \\
+  \hline 
+    \textbf{all other synapses} & 
+                   non-plastic
+  \\
+  \hline
+\end{tabular}
+%%%%%%%%%%%%%%%%%%%
+\begin{tabular}{|@{\hspace*{1mm}}p{15.15cm}|}
+%\hline 
+  \multicolumn{1}{|>{\color{white}\columncolor{black}}c|}{\textbf{Input}}\\
+  \begin{itemize}
+  \item $N_\text{stim}$ spike-generating sources, each representing a character in the sequences
+  \item each spike source connected to a random subset of $L$ subpopulations via a synaptic weight $J_\EF$ and a delay of $d_\EF$
+  \end{itemize}
+  \\
+\hline 
+\end{tabular}
+%%%%%%%%%%%%%%%%%%%
+\begin{tabular}{|@{\hspace*{1mm}}p{15.15cm}|}
+  \multicolumn{1}{|>{\color{white}\columncolor{black}}c|}{\textbf{Training}}\\
+  \begin{itemize}
+  \item repetitive stimulation of network ($k$ times) using the same batch of data.
+  \item a batch of data contains S sequences, each sequence is composed of C characters
+  \end{itemize}
+  \\
+  \hline
+\end{tabular}
+%%%%%%%%%%%%%%%%%%% 
+\begin{tabular}{|@{\hspace*{1mm}}p{15.15cm}|}
+  \multicolumn{1}{|>{\color{white}\columncolor{black}}c|}{\textbf{Initial conditions}} \\
+  \begin{itemize}
+    \item for every network realization: initial permanences (at time $0$) randomly drawn from uniform distributions in the interval $[P_\text{min},P_0)$. Membrane potentials are initialized to $V_\text{r}$.
+  \end{itemize}\\
+  \hline
+\end{tabular}
+%%%%%%%%%%%%%%%%%%%
+\begin{tabular}{|@{\hspace*{1mm}}p{15.15cm}|}
+\multicolumn{1}{|>{\color{white}\columncolor{black}}c|}{\textbf{Simulation details}}\\
+\hline
+\begin{itemize}
+    \item network simulations performed in NEST version \note[id=YB]{2.20.0} \citep{nest2200}
+    \item synchronous update using exact integration of the system dynamics on a discrete time grid with step size $\dtsim$ \citep{Rotter99a}
+\end{itemize}
+\\
+\hline
+\end{tabular}
+%%%%%%%%%%%%%%%%%%%
+\caption{Description of the network model (continued).}
+\end{table}
+
+\clearpage
+
+\subsection{Model and simulation parameters}
+\label{app:suppl_parameters}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}[ht!]
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|@{\hspace*{1mm}}p{3cm}@{}|@{\hspace*{1mm}}p{4cm}@{}|@{\hspace*{1mm}}p{8.1cm}|}
+\hline
+\textbf{Name} & \textbf{Value} & \textbf{Description}\\
+\hline                               
+\multicolumn{3}{|>{\columncolor{lightgray}}c|}{\textbf{Network}}\\
+%\hline 
+%\textbf{Name} & \textbf{Value} & \textbf{Description}\\
+\hline 
+$N_\exc$ & $3900$ & number of excitatory neurons \\
+\hline
+$N_\inh$ & $26$ & number of inhibitory neurons \\
+\hline
+$M$ & $26$ & number of subpopulations \\
+\hline
+$\nE$,$\nI$ & $150$,$1$ & number of excitatory and inhibitory neurons per subpopulation \\
+\hline
+\multicolumn{3}{|>{\columncolor{lightgray}}c|}{\textbf{(Potential) Connectivity}}\\
+%\hline 
+%\textbf{Name} & \textbf{Value } & \textbf{Description}\\
+\hline 
+$\KEE$ & $270$ & number of excitatory inputs per excitatory neuron ($\EE$ in-degree) \\
+\hline 
+$\KEI$ & $1$ & number of inhibitory inputs per excitatory neuron ($\EI$ in-degree) \\
+\hline 
+$\KIE$ & $\nE$ & number of excitatory inputs per inhibitory neuron ($\IE$ in-degree) \\
+\hline 
+$\KII$ & $0$ & number of inhibitory inputs per inhibitory neuron ($\II$ in-degree) \\
+%\hline 
+%\end{tabular}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{tabular}{|@{\hspace*{1mm}}p{3cm}@{}|@{\hspace*{1mm}}p{4cm}@{}|@{\hspace*{1mm}}p{8.1cm}|}
+\hline 
+\multicolumn{3}{|>{\columncolor{lightgray}}c|}{\textbf{Excitatory neurons}}\\
+\hline 
+$\tauM$ & $10\ms$ & membrane time constant \\
+\hline 
+$\tauR$ & $20\ms$ & absolute refractory period \\
+\hline 
+$\CM$ & $250\pF$ & membrane capacity \\
+\hline 
+$\Vreset$ & $0.0\mV$ & reset potential \\
+\hline 
+$\theta$ & $20\mV$ & somatic spike threshold \\
+\hline 
+$ I_\text{p}$ & $200\pA$ &  dAP current plateau amplitude\\
+\hline 
+$\tau_\text{dend}$ & $60\ms$ & dAP duration\\
+\hline 
+$\theta_{\text{dend}}$ & $60\pA$ & dAP threshold \\
+%\hline
+%\end{tabular}
+%\begin{tabular}{|@{\hspace*{1mm}}p{3cm}@{}|@{\hspace*{1mm}}p{4cm}@{}|@{\hspace*{1mm}}p{8.1cm}|}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\hline 
+\multicolumn{3}{|>{\columncolor{lightgray}}c|}{\textbf{Inhibitory neurons}}\\
+\hline
+$\tauM$ & $5\ms$ & membrane time constant\\
+\hline 
+$\tauR$ & $2\ms$ & absolute refractory period\\
+\hline 
+$\CM$ & $250\pF$ & membrane capacity\\
+\hline 
+$\Vreset$ & $0.0\mV$ & reset potential\\
+\hline 
+$\theta$ & $15\mV$ & spike threshold\\
+\hline
+\end{tabular}
+%%%%%%%%%%%%%%%%%%%
+\caption{Model and simulation parameters (continued on next page).}
+\label{tab:Model-parameters} 
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\setcounter{table}{\thetable-1}
+\begin{table}[ht!]
+%%%%%%%%%%%%%%%%%%%
+\begin{tabular}{|@{\hspace*{1mm}}p{3cm}@{}|@{\hspace*{1mm}}p{4cm}@{}|@{\hspace*{1mm}}p{8.1cm}|}
+\hline
+\textbf{Name} & \textbf{Value } & \textbf{Description}\\
+\hline
+\multicolumn{3}{|>{\columncolor{lightgray}}c|}{\textbf{Synapse}}\\
+%\hline 
+%\textbf{Name} & \textbf{Value } & \textbf{Description}\\
+\hline 
+$\J_{\EE, ij}$ & $\{0,W\}$ & E-neuron $\to$ E-neuron connections strength (PSP amplitude of E-neuron $i$ evoked by a spike from other E-neuron $j$)\\
+\hline
+$W$ & $12\mV$ & PSP amplitude of the E-neuron evoked by a spike from other E-neuron if the synapse is mature \\
+\hline
+$\JIE$ & $0.75\mV$ & E-neuron $\to$ I-neuron connections strength (PSP amplitude of the I-neuron evoked by a spike from E-neuron), this determines the pattern size: $s=\frac{\theta}{\JIE}$\\
+\hline
+$\JEI$ & $-22.5 \mV$ & I-neuron $\to$ E-neuron connections strength (PSP amplitude of the E-neuron evoked by a spike from I-neuron) \\
+\hline 
+${\tauS}_{,\EE}$ & $5 \ms$ & time constant of E-neuron $\to$ E-neuron connection (post-synaptic current)\\
+\hline 
+${\tauS}_{,\IE}$ & $0.5 \ms$ & time constant of E-neuron $\to$ I-neuron connection (post-synaptic current) \\
+\hline 
+${\tauS}_\EI$ & $1 \ms$ & time constant of I-neuron $\to$ E-neuron connection (post-synaptic current) \\
+\hline
+$d_{\EE}$ & $2\ms$ & delay of E-neuron $\to$ E-neuron connection \\
+\hline
+$d_\IE$ & $0.1\ms$ & delay of E-neuron $\to$ I-neuron connection \\
+\hline
+$d_\EI$ & $0.1\ms$ & delay of I-neuron $\to$ E-neuron connection \\
+\hline 
+\multicolumn{3}{|>{\columncolor{lightgray}}c|}{\textbf{Plasticity}}\\
+\hline
+$P_{ij}$ & $[P_\text{min},P_0]$  & synaptic permanence \\
+\hline
+$\lambda$ & 0.01 & learning rate \\
+\hline
+$l$ & 0.01 & leak term (permanence decrement) \\
+\hline
+$P_{\theta}$ & 20 & synapse maturity threshold
+% when the permanence reaches this value the plastic weight ($\JEE$) becomes W
+                            \\
+\hline
+$P_\text{max}$ & 50 & permanence upper bound\\
+\hline
+$P_\text{min}$ & 0 & permanence lower bound  \\
+\hline
+$P_0$ & 8 & permanence initialization upper bound \\
+\hline                        
+$ \tau_{+} $ & 20 \ms & plasticity time constant (potentiation) \\
+\hline                        
+$ \nu_\text{d}^* $ & 1 & target dAP rate \\
+\hline
+$ \kappa $ & 0.2 & homeostasis factor \\
+\hline                                              
+\multicolumn{3}{|>{\columncolor{lightgray}}c|}{\textbf{Input}}\\
+%\hline 
+%\textbf{Name} & \textbf{Value } & \textbf{Description}\\
+\hline 
+$N_\text{stim}$ & $26$ & number of external spike sources \\
+\hline 
+$L$ & $1$ & number of subpopulations connected to the same spike source \\
+\hline
+$S$ & for task I: 2, for task II: 5 & number of sequences per batch \\
+\hline 
+$C$ & for task I: 4, for task II: 6 & number of characters per sequence \\
+\hline
+$A$ & 26 & length of the total alphabet \\
+%\hline 
+%\end{tabular}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{tabular}{|@{\hspace*{1mm}}p{3cm}@{}|@{\hspace*{1mm}}p{4cm}@{}|@{\hspace*{1mm}}p{8.1cm}|}
+\hline 
+$\JEF$ & $22 \mV$ & Feedforward input $\to$ E-neuron connections strength (PSP amplitude of E-neuron $i$ evoked by external spike) \\
+\hline 
+${\tauS}_{,\EF}$ & $2 \ms$ & time constant of external input $\to$ E-neuron connection (post-synaptic current) \\
+\hline 
+$d_\text{EF}$ & $0.1\ms$ & delay of external input $\to$ E-neuron connection \\
+\hline
+\multicolumn{3}{|>{\columncolor{lightgray}}c|}{\textbf{Simulation}}\\
+%\hline 
+%\textbf{Name} & \textbf{Value } & \textbf{Description}\\
+\hline
+$\Delta T$ & [2, 90] \ms & interstimulus timing \\
+\hline
+$\dtsim$ & $0.1\ms$ & time resolution \\
+\hline
+$k$ & [$100$, $400$] & number of training episodes  \\
+\hline 
+\end{tabular}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\caption{Model and simulation parameters (continued).}
+\end{table}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% add bibliography 
+\begin{thebibliography}{}
+
+\bibitem[\protect\citeauthoryear{Linssen et~al.}{Linssen
+  et~al.}{2018}]{Nest2160}
+Linssen, C., Lepper{\o}d, M.~E., Mitchell, J., Pronold, J., Eppler, J.~M.,
+  Keup, C., Peyser, A., Kunkel, S., Weidel, P., Nodem, Y., Terhorst, D., Deepu,
+  R., Deger, M., Hahne, J., Sinha, A., Antonietti, A., Schmidt, M., Paz, L.,
+  Garrido, J., Ippen, T., Riquelme, L., Serenko, A., K\"{u}hn, T., Kitayama,
+  I., M{\o}rk, H., Spreizer, S., Jordan, J., Krishnan, J., Senden, M., Hagen,
+  E., Shusharin, A., Vennemo, S.~B., Rodarie, D., Morrison, A., Graber, S.,
+  Schuecker, J., Diaz, S., Zajzon, B., \& Plesser, H.~E. (2018).
+\newblock Nest 2.16.0.
+
+\bibitem[\protect\citeauthoryear{Rotter \& Diesmann}{Rotter \&
+  Diesmann}{1999}]{Rotter99a}
+Rotter, S., \& Diesmann, M. (1999).
+\newblock Exact digital simulation of time-invariant linear systems with
+  applications to neuronal modeling.
+\newblock {\em Biol. Cybern.\/}~{\em 81\/}(5-6), 381--402.
+
+\end{thebibliography}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
+
+
+\end{document}
