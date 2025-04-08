@@ -256,14 +256,14 @@ pdfkeywords={}
 \end{itemize}
 \\
 \hline 
-\textbf{Synapse model } & additive (linear) exponential postsynaptic currents (PSCs)  \\
+\textbf{Synapse model } & exponential or alpha-shaped postsynaptic currents (PSCs)  \\
 \hline 
-\textbf{Plasticity } &  spike-timing dependent structural plasticity and firing-rate homeostasis in excitatory to excitatory connections
+\textbf{Plasticity } &  spike-timing dependent structural plasticity and tonic depression in excitatory to excitatory connections
 \\
 \hline
 \end{tabular}
 %%%%%%%%%%%%%%%%%%%
-\caption{Description of the network model (continued on next page).}
+\caption{Summary of the network model. Parameter values are given in Table ... .}
 \label{tab:model_description}
 \end{table}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -272,40 +272,48 @@ pdfkeywords={}
 \begin{table}[H]
 %%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%% 
-\begin{tabular}{|@{\hspace*{1mm}}p{3cm}@{}|@{\hspace*{1mm}}p{5.95cm}@{}|@{\hspace*{1mm}}p{5.95cm}|}
+\begin{tabular}{|@{\hspace*{1mm}}p{3cm}@{}|@{\hspace*{1mm}}p{10.95cm}@{}|@{\hspace*{1mm}}p{0.95cm}|}  
 \hline 
 \multicolumn{3}{|>{\color{white}\columncolor{black}}c|}{\textbf{Populations}}\\
 \hline
-\multicolumn{3}{|l|}{Ensemble of subpopulations $\{i|i=1, \ldots, M  \}$}\\
-\hline 
-\textbf{Name} & \textbf{Elements} & \textbf{Size}\\
-\hline 
-$\Epop_{i}$ & excitatory neurons in subpopulation $i$ & $n_\exc$ \\
-\hline 
-$\Ipop_{i}$ & inhibitory neurons in subpopulation $i$ & $n_\inh$ \\
-\hline 
+$\Epop=\cup_{i=k}^M\mathcal{M}_k$ & excitatory (E) neurons  & $N_\exc$\\
+  \hline
+  $\Ipop$ & inhibitory (I) neurons & $N_\inh$\\
+  \hline
+  %$\Bpop=\cup_{i=k}^M\mathcal{Q}_k$ or $\mathcal{G}$ & background inputs & $M$\\
+  %\hline
+  $\mathcal{M}_k$ & excitatory neurons in subpopulation $k$, \mbox{$\mathcal{M}_k\cap\mathcal{M}_l=\emptyset\ (\forall{}k\ne{}l\in[1,M])$} & $n_\exc$ \\
+  \hline
 \end{tabular}
 %%%%%%%%%%%%%%%%%%%
-\begin{tabular}{|@{\hspace*{1mm}}p{1.45cm}@{}|@{\hspace*{1mm}}p{1.45cm}@{}|@{\hspace*{1mm}}p{12cm}|}
+\begin{tabular}{|@{\hspace*{1mm}}p{1.85cm}@{}|@{\hspace*{1mm}}p{1.85cm}@{}|@{\hspace*{1mm}}p{11.2cm}|}
 \hline 
 \multicolumn{3}{|>{\color{white}\columncolor{black}}c|}{\textbf{Connectivity}}\\
 \hline 
-\textbf{Source} & \textbf{Target} & \textbf{Pattern, same in the parameter table }\\
+\textbf{Source population} & \textbf{Target population} & \textbf{Pattern}\\
 \hline 
-$\Epop_{i}$ ($\forall{i}$) & $\Epop_{j}$ ($\forall{j}$) & random, fixed in-degrees $K_\EE$ and delays $d_{\EE}$, plastic weights $J_{\EE, ji}$  ($\EE$ connections) \\
+  $\Epop$  & $\Epop$ & random;
+                       fixed in-degrees $K_i=K_\EE$, delays $d_{ij}=d_{\EE}$, and synaptic time constants $\tau_{ij}=\tau_{\EE}$,
+                       plastic synaptic weights $J_{ij}$ 
+                       ($\forall{}i\in{\Epop},\,\forall{}j\in{\Epop}$; ``$\EE$ connections'') \\
 \hline 
-$\Epop_{i}$ ($\forall{i}$)  & $\Ipop_{i}$ ($\forall{i}$) & all-to-all, fixed delays $d_{\IE}$, fixed weights $J_\IE$ (suprathreshold) ($\IE$ connections) \\
+  $\Epop$  & $\Ipop$ & all-to-all;
+                       fixed delays $d_{ij}=d_{\IE}$, synaptic time constants $\tau_{ij}=\tau_{\IE}$, and weights $J_{ij}=J_\IE$
+                       ($\forall{}i\in\mathcal\Ipop,\,\forall{}j\in{}\Epop$; ``$\IE$ connections'') \\
 \hline 
-$\Ipop_{i}$ ($\forall{i}$)& $\Epop_{i}$ ($\forall{i}$)& all-to-all, fixed delays $d_{\EI}$, fixed weights $J_\EI$ ($\EI$ connections) \\
+  $\Ipop$ & $\Epop$ & all-to-all;
+                      fixed delays $d_{ij}=d_{\EI}$, synaptic time constants $\tau_{ij}=\tau_{\EI}$, and weights $J_{ij}=J_\EI$
+                      ($\forall{}i\in\Epop,\,\forall{}j\in{}\Ipop$; ``$\EI$ connections'') \\
 \hline 
-$\Ipop_{i}$ ($\forall{i}$)& $\Ipop_{i}$ ($\forall{i}$)& none ($\II$ connections) \\
+  $\Ipop$ & $\Ipop$ & none (``$\II$ connections'') \\
 \hline
-\multicolumn{3}{|l|}{no self-connections (``autapses''), no multiple connections (``multapses'') }\\
-\hline 
+  all & all & no self-connections (``autapses''), no multiple connections (``multapses'') \\
+
+\hline
 
 \end{tabular}
 %%%%%%%%%%%%%%%%%%%
-\caption{Description of the network model (continued on next page).}
+\caption{Description of the connectivity. Parameter values are given in Table ... .}
 \label{tab:Model-description} 
 \end{table}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
