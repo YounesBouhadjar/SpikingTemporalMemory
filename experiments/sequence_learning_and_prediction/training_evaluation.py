@@ -54,7 +54,7 @@ def create_parser():
     parser_.add_argument("--exp-params-idx", dest="exp_params_idx", type=int, default=0)
     parser_.add_argument("--batch-id", dest="batch_idx", type=int, default=0)
     parser_.add_argument("--jobmax", dest="jobmax", type=int, default=0)
-    parser_.add_argument("--hwb", dest="run_hwb", type=bool, default=False, help="enabled if hyperparameter search is executed")
+    parser_.add_argument("--hwb", dest="run_hwb", type=bool, default=True, help="enabled if hyperparameter search is executed")
     #parser_.add_argument("--wbm", dest="wb_mode", type=str, default="offline")
     parser_.add_argument("--wbm", dest="wb_mode", type=str, default="online")
     return parser_
@@ -89,9 +89,12 @@ def generate_reference_data(PS, arr_id=None):
 
         # TODO: alternatively these could be added to args (see above)
         #params['syn_dict_ee']['lambda_h'] = wandb.config['lambda_h']
-        params['syn_dict_ee']['tau_perm'] = wandb.config['tau_perm']
-        params['syn_dict_ee']['lambda_minus'] = wandb.config['lambda_minus']
-        params['syn_dict_ee']['lambda'] = wandb.config['lambda']
+        try:
+            params['syn_dict_ee']['tau_perm'] = wandb.config['tau_perm']
+            params['syn_dict_ee']['lambda_minus'] = wandb.config['lambda_minus']
+            params['syn_dict_ee']['lambda'] = wandb.config['lambda']
+        except:
+            pass
         try:
             params['task']['S'] = wandb.config['S']
             params['task']['C'] = wandb.config['C']
@@ -301,8 +304,50 @@ def generate_reference_data(PS, arr_id=None):
     # ###############################################################
     # simulate the network
     # ===============================================================
-    model_instance.simulate(sim_stop)
-    time_simulate = time.time()
+    err_prev = 1000
+    tprev = 0
+    counter_abort = 0
+    exp_seq_set_instance_size = max(seq_set_instance.keys())
+    record_ts = True
+    for i in range(S-1, exp_seq_set_instance_size-1, 10*S):
+        print("Simulate step", i)
+        tnext = seq_set_instance[i+1]['times'][0]
+        sim_time = int(tnext - tprev - 10.)
+        model_instance.simulate(sim_time, save_data=False)
+
+        err, fn, fp = model_instance.measure_fp_fn(seq_set_instance,
+                                                   i+1)
+        #model_instance.plot_activity(stop=tnext-10,
+        #                             duration=sim_time)
+        wandb.log({"err"+str(arr_id): err,
+                   "fn"+str(arr_id): fn,
+                   "fp"+str(arr_id): fp})
+
+        if err < 0.1 and record_ts:
+            wandb.log({"ts"+str(arr_id): i})
+            ts = i 
+            record_ts = False
+            
+            break
+
+        time_simulate = time.time()
+        tprev += sim_time
+
+        # early abort for unsuccessful experiments
+        e = err - err_prev
+        if e >= 0:
+            counter_abort += 1 
+        else:
+            counter_abort = 0
+
+        if counter_abort > 10:
+            break
+
+        err_prev = err
+
+    if record_ts:
+        wandb.log({"ts"+str(arr_id): None})
+        ts = np.nan
 
     # store connections after learning
     if params['store_connections']:
@@ -327,49 +372,15 @@ def generate_reference_data(PS, arr_id=None):
             time_simulate -
             time_connect))
 
-    # display prediction performance only for debugging    
-    if params['evaluate_performance']:
 
-        #model_instance.plot_activity(stop=sim_stop, duration=duration+10.)
+    #print("\n### Plasticity parameters")
+    #print("lambda: %0.4f" % params['syn_dict_ee']['lambda'])
+    #print("lambda minus: %0.4f" % model_instance.params['syn_dict_ee']['lambda_minus']) 
+    #print("excitation step %0.1fms" % params['DeltaT']) #30-50  
+    #print("seed number: %d" % params['seed']) 
+    #print("number of learning episodes: %d" % params['learning_episodes'])
 
-        exp_seq_set_instance_size = max(seq_set_instance.keys())
-        xt, labels, spt = model_instance.load_resampled_data(seq_set_instance,
-                                                             exp_seq_set_instance_size)
-
-        errs, fns, fps = model_instance.measure_fp_fn(seq_set_instance,
-                                                      exp_seq_set_instance_size)
-
-        spl_last = []
-        for k, spl in enumerate(spt[-S:]):
-            print(f'\n{k}: {spl}')
-            spl_last += spl[1:]
-        
-        sp_last = np.mean(spl_last)
-        acc, mse, readout = model_instance.train_readout(xt, labels, int(S))
-        
-        #model_instance.plot_readout(readout, np.concatenate(xt[-int(S):], axis=1))
-
-        wandb.log({"errs"+str(arr_id): errs,
-                   "fns"+str(arr_id): fns,
-                   "fps"+str(arr_id): fps,
-                   "mse"+str(arr_id): mse,
-                   "acc"+str(arr_id): acc,
-                   "sp"+str(arr_id) : sp_last})
-
-        return errs, fns, fps, acc, mse, sp_last
-
-    else:
-        return 0, 1
-
-
-    wandb.finish()
-
-    print("\n### Plasticity parameters")
-    print("lambda: %0.4f" % params['syn_dict_ee']['lambda'])
-    print("lambda minus: %0.4f" % model_instance.params['syn_dict_ee']['lambda_minus']) 
-    print("excitation step %0.1fms" % params['DeltaT']) #30-50  
-    print("seed number: %d" % params['seed']) 
-    print("number of learning episodes: %d" % params['learning_episodes'])
+    return err, fn, fp, ts
 
 if __name__ == '__main__':
 
@@ -378,50 +389,33 @@ if __name__ == '__main__':
 
     PS = __import__(args.exp_params.split(".")[0]).p
 
-    # generate_reference_data()
+    print("args.exp_params", args.exp_params)
+
     if args.run_hwb:
+
         err_all = []
         fn_all = []
         fp_all = []
-
-        sp_all = []
-        acc_all = []
-        mse_all = []
-        # go consecutively through the seed to compute an averaged loss
-        # to be logged in and used by the hyperparameter search of wandb
+        ts_all = []
         for i in range(len(PS['seed'])):
             print("Experiment", i)
             nest.ResetKernel()
-            err, fn, fp, acc, mse, sp_last = generate_reference_data(PS, i)
+            errs, fns, fps, tss = generate_reference_data(PS, i)
         
-            err_all.append(err)
-            fn_all.append(fn)
-            fp_all.append(fp)
-
-            acc_all.append(acc)
-            mse_all.append(mse)
-            sp_all.append(sp_last)
+            err_all.append(errs)
+            fn_all.append(fns)
+            fp_all.append(fps)
+            ts_all.append(tss)
 
         err = sum(err_all) / len(err_all)
         fn = sum(fn_all) / len(fn_all)
         fp = sum(fp_all) / len(fp_all)
-
-        sp = sum(sp_all) / len(sp_all)
-        acc = sum(acc_all) / len(acc_all)
-        mse = sum(mse_all) / len(mse_all)
+        ts = np.nanmean(ts_all)
 
         wandb.log({"err": err,
                    "fn": fn,
                    "fp": fp,
-                   "mse": mse,
-                   "acc": acc,
-                   "sp": sp})
+                   "ts": ts})
     else:
-        err, fn, fp, acc, mse, sp = generate_reference_data(PS, args.exp_params_idx)
-
-        wandb.log({"err": err,
-                   "fn": fn,
-                   "fp": fp,
-                   "mse": mse,
-                   "acc": acc,
-                   "sp": sp})
+        generate_reference_data(PS, args.exp_params_idx)
+    wandb.finish()

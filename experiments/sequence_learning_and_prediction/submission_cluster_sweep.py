@@ -5,7 +5,6 @@ import wandb
 import numpy as np
 
 from shtm import helper 
-from training import generate_reference_data
 
 # get commmand line arguments
 try:

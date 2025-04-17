@@ -371,7 +371,7 @@ def load_numpy_spike_data(path, label, skip_rows=3):
     fname = '%s/%s.npy' % (path, label)
     x = np.load(fname)
 
-    return x
+    return x[x[:, 1].argsort()]
 
 ##############################################
 def load_spike_data(path, label, skip_rows=3):
@@ -640,17 +640,13 @@ def compute_prediction_performance(somatic_spikes, dendriticAP, dendriticAP_reco
             ratio_fp_activation = 0.5
 
             for k, v in count_subpopulations.items():
+
                 if k not in excited_subpopulations and v >= (ratio_fp_activation * params['pattern_size']):
                     #print('episode %d/%d count of a false positive %d, %d' % (it, len(recording_times), k, v))
                     output[k] = 1
                 elif k in excited_subpopulations and v >= (ratio_fn_activation * params['pattern_size']):
-                    counter_correct += 1
+                    output[k] = 1
 
-            # find false negatives
-            if counter_correct == params['L']:
-                output[excited_subpopulations] = 1
-            #else:
-            #    false_negative = 1
 
             error = 1/params['L'] * np.sqrt(sum((output - target) ** 2))
             false_positive = 1/params['L'] * sum(np.heaviside(output - target, 0))
@@ -716,6 +712,151 @@ def homeostasis_contribution(hs, Wmax=1, r_d=0, r_t=1):
 
 
 #################################################
+def measure_fp_fn(somatic_spikes,
+                  dendritic_current,
+                  seq_set,
+                  seq_set_instances,
+                  seq_set_instance_id,
+                  params,
+                  mode='train',
+                  debug=False):
+    """
+    compute state matrix
+
+    Parameters
+    ----------
+    test_sequences         : list
+    times_somatic_spikes   : ndarray
+    senders_somatic_spikes : ndarray
+    excitation_times       : list
+
+    Returns
+    -------
+    state matrix : numpy array
+    """
+
+    #assert len(excitation_times) >= 2, "excitation times need to contain at leasts 2 components"
+    #DeltaT = excitation_times[1] - excitation_times[0] - stim_dur
+
+    xt = []
+    labels = []
+    ls = []
+    spt = []
+    shift = 20.
+    interval = 14.
+
+    end_iterations = 0
+
+    len_seqs = sum([len(seq_set[i]) for i in range(len(seq_set))])
+    print("seq_set", seq_set)
+
+    assert len(somatic_spikes[0]) != 0
+        
+    times_somatic_spikes = somatic_spikes[:, 1]
+    senders_somatic_spikes = somatic_spikes[:, 0]
+    # for each sequence in the test sequences
+
+    times_dendritic_current = dendritic_current[:, 1]
+    senders_dendritic_current = dendritic_current[:, 0]
+    dendritic_values = dendritic_current[:, 2]
+
+    S = len(seq_set)
+    errors = [[] for _ in range(S)]
+    false_positives = [[] for _ in range(S)]
+    false_negatives = [[] for _ in range(S)]
+    active_dendrites = [[] for _ in range(S)]
+
+    acc_seq = 0
+    ls = []
+    sps = []
+
+    errs = 0
+    fps = 0
+    fns = 0
+
+    for q in range(S):
+
+        # initialize state matrix
+        len_seq = len(seq_set_instances[q]['elements'])
+        seq_id = seq_set_instances[q]['seq']
+        len_cur_seq = sum([len(seq_set[i]) for i in range(len(seq_set)) if i < int(seq_id)])
+
+        # for each character in the sequence
+        for k, (ele, time) in enumerate(zip(seq_set_instances[seq_set_instance_id-S+q]['elements'][1:],
+                                            seq_set_instances[seq_set_instance_id-S+q]['times'][1:])):
+
+            #indices_soma = np.where((times_somatic_spikes < (excitation_times[j] + s_t+min(interval, deltaT))) & 
+            #                        (times_somatic_spikes > (excitation_times[j] + s_t-min(interval, s_t)-shift)))
+            #indices_soma = np.where((times_somatic_spikes < (time + interval)) & 
+            #                        (times_somatic_spikes > (time - shift)))
+            #senders_soma = np.array(senders_somatic_spikes[indices_soma], int)
+
+            idx_q = np.where((times_dendritic_current < (time + interval - shift)) & 
+                             (times_dendritic_current > (time - shift)))[0]
+
+            idx_dAP = np.where(dendritic_values[idx_q] > params['soma_params']['I_p'] - 1.)[0]
+            
+            senders_dAP = senders_dendritic_current[idx_q][idx_dAP]
+            senders_dAP = np.unique(senders_dAP)
+
+            subpopulation_senders_dAP = [int((s - 1) // params['n_E']) for s in senders_dAP]
+
+            target = np.zeros(params['M'])
+            target[ele] = 1
+
+            # count false positives and construct the output vector
+            output = np.zeros(params['M'])
+            count_subpopulations = Counter(subpopulation_senders_dAP)
+            counter_correct = 0
+            #num_active_dendrites = count_subpopulations[excited_subpopulations[0]]
+
+            #ratio_fn_activation = 0.8
+            #ratio_fp_activation = 0.1
+            ratio_fn_activation = 0.5
+            ratio_fp_activation = 0.5
+
+            for k, v in count_subpopulations.items():
+
+                if k != ele and v >= (ratio_fp_activation * params['pattern_size']):
+                    #print('episode %d/%d count of a false positive %d, %d' % (it, len(recording_times), k, v))
+                    output[k] = 1
+                elif k == ele and v >= (ratio_fn_activation * params['pattern_size']): #and v <= (3 * params['pattern_size']):
+                    output[ele] = 1
+           
+            #print('output: ', output)
+            #print('target: ', target)
+            error_per_subpop = (output - target) ** 2
+            error = np.sqrt(sum(error_per_subpop))
+            false_positive_per_subpop = np.heaviside(output - target, 0)
+            false_positive = sum(false_positive_per_subpop)
+            false_negative_per_subpop = np.heaviside(target - output, 0)
+            false_negative = sum(false_negative_per_subpop)
+
+            # append errors, fp, and fn for the different sequences
+            errors[q].append(error)
+            false_positives[q].append(false_positive)
+            false_negatives[q].append(false_negative)
+            #active_dendrites[q].append(num_active_dendrites)
+
+            errs += error
+            fps += false_positive
+            fns += false_negative
+
+        print('#### Prediction performance ####')
+        print('Error:', errors[q])
+        print('False positives:', false_positives[q])
+        print('False negatives:', false_negatives[q])
+        #print(f'Number of active neurons in {seqs[seq_num]}: {active_neurons[seq_num]}')
+        #print(f'Number of active dendrites in {seqs[seq_num]}: {active_dendrites[seq_num]}')
+
+    errs /= S
+    fns /= S
+    fps /= S
+
+    return errs, fns, fps
+
+
+#################################################
 def get_state_matrix(somatic_spikes,
                      seq_set,
                      seq_set_instances,
@@ -744,7 +885,8 @@ def get_state_matrix(somatic_spikes,
     xt = []
     labels = []
     ls = []
-    shift = 0.
+    spt = []
+    shift = 4.
     interval = 14.
 
     end_iterations = 0
@@ -767,6 +909,8 @@ def get_state_matrix(somatic_spikes,
 
             acc_seq = 0
             ls = []
+            sps = []
+
                 # for each character in the sequence
             for k, (ele, time) in enumerate(zip(seq_set_instances[q]['elements'], seq_set_instances[q]['times'])):
 
@@ -781,6 +925,14 @@ def get_state_matrix(somatic_spikes,
                 tg[len_cur_seq+k] = 1
                 ls.append(tg)
 
+                #if q == (seq_set_instance_size - 3):
+                #    print('get_state matrix')
+                #    import pdb
+                #    pdb.set_trace()
+
+                sp = len(senders_soma) / params['n_E']
+                sps.append(sp)
+
             #acc_seq += len(seq)
 
         else:
@@ -788,6 +940,7 @@ def get_state_matrix(somatic_spikes,
 
         xt.append(x)
         labels.append(ls)
+        spt.append(sps)
 
     if debug:
         print(f"plot somatic state matrix during {mode}: matrix_{mode}_soma.pdf")
@@ -801,7 +954,7 @@ def get_state_matrix(somatic_spikes,
         plt.savefig(f"matrix_{mode}_somatic.pdf")
         plt.close()
 
-    return xt, labels
+    return xt, labels, spt
 
 ###############################################################################
 def synaptic_plastic_change(facilitate_factor, tau_plus, w_max, hs, delta_t=40.):

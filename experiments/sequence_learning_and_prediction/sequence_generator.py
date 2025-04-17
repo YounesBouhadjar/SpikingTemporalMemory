@@ -15,7 +15,7 @@ import matplotlib.pylab as plt
 
 ##############################################################################
 
-def generate_disjoint_sequences(S,C,vocabulary):
+def generate_disjoint_sequences(S,C,vocabulary,redraw=False):
     '''
     Generates a set of S non-overlapping sequences of length C with non-repeating elements from a given vocabulary. 
     In addition, the function returns a reduced vocabulary, i.e., the list of remaining elements 
@@ -45,18 +45,19 @@ def generate_disjoint_sequences(S,C,vocabulary):
     assert(type(S)==int and S>0)
     assert(type(C)==int and C>0)
     assert(type(vocabulary)==list)    
-    assert(len(vocabulary)>=S*C)
+    if redraw == False:
+        assert(len(vocabulary)>=S*C)
     
     reduced_vocabulary = list(np.random.permutation(vocabulary))
     seq_set = []
     for cs in range(S):
-        seq, reduced_vocabulary = select_random_elements_from_vocabulary(C,reduced_vocabulary,redraw = False)
+        seq, reduced_vocabulary = select_random_elements_from_vocabulary(C,reduced_vocabulary,redraw=redraw)
         seq_set += [seq]
     return seq_set,reduced_vocabulary
 
 ##############################################################################
 
-def select_random_elements_from_vocabulary(N,vocabulary,redraw = False):
+def select_random_elements_from_vocabulary(N, vocabulary, redraw=False):
     '''
     Randomly draws N elements from a given vocabulary (with or without redrawing). 
     If redraw=False, drawn elements are removed from the returned vocabulary.
@@ -84,12 +85,18 @@ def select_random_elements_from_vocabulary(N,vocabulary,redraw = False):
 
     assert(type(N)==int and N>=0)
     assert(type(vocabulary)==list)    
-    assert(N<=len(vocabulary))
 
-    vocabulary = list(np.random.permutation(vocabulary))
-    chars = vocabulary[:N]
-    if redraw == False:
+    if redraw:
+        chars = np.random.choice(vocabulary,size=N,replace=redraw).tolist()
+    
+    else:
+        assert(N<=len(vocabulary))
+        
+        #vocabulary = list(np.random.permutation(vocabulary))
+        vocabulary = np.random.permutation(vocabulary).tolist()        
+        chars = vocabulary[:N]
         vocabulary=vocabulary[N::]  ## remove N elements from list of available elements (no redrawing)
+
     return chars, vocabulary
 
 ##############################################################################
@@ -160,6 +167,9 @@ def generate_sequences(S, C, R, O, vocabulary_size, minimal_prefix_length = 0, m
 
     '''
 
+    redraw_overlaps = True
+    redraw_postfix = True
+    redraw_prefix = False
     if S==0 or C==0:
         seq_set = []
         shared_seq_set = []
@@ -191,39 +201,54 @@ def generate_sequences(S, C, R, O, vocabulary_size, minimal_prefix_length = 0, m
             vocabulary = list(range(vocabulary_size))
                     
             for cs in range(S):            
-                seq, reduced_vocabulary = select_random_elements_from_vocabulary(C,vocabulary,redraw = True)
+                seq, reduced_vocabulary = select_random_elements_from_vocabulary(C,
+                                                                                 vocabulary,
+                                                                                 redraw=True)
                 seq_set += [seq]
-                seq_set_intervals += [np.random.uniform(low=inter_elem_intv_min,high=inter_elem_intv_max,size=C-1)]                
+                seq_set_intervals += [np.random.uniform(low=inter_elem_intv_min,
+                                                        high=inter_elem_intv_max,
+                                                        size=C-1)]                
             shared_seq_set = []
             
         else:
             
-            if redraw==False:
-                vocabulary_size_old = vocabulary_size
-                vocabulary_size = R*O + S*(C-O)  ## set vocabulary size to the required minimum
-
-                if vocabulary_size_old != vocabulary_size:
-                    print("\n##################################################################")
-                    print("WARNING: vocabulary size is changed to %d." % vocabulary_size)
-                    print("##################################################################\n")
-
-                #assert(vocabulary_size >= R*O + S*(C-O))
-            else:
-                #vocabulary_size = R*O
-                assert(vocabulary_size >= R*O)
+#            if redraw_prefix==False and redraw_postfix==False:
+#                vocabulary_size_old = vocabulary_size
+#                vocabulary_size = R*O + S*(C-O)  ## set vocabulary size to the required minimum
+#
+#                if vocabulary_size_old != vocabulary_size:
+#                    print("\n##################################################################")
+#                    print("WARNING: vocabulary size is changed to %d." % vocabulary_size)
+#                    print("##################################################################\n")
+#
+#                #assert(vocabulary_size >= R*O + S*(C-O))
+#            elif redraw_overlaps == True:
+#                #vocabulary_size = R*O
+#                assert(vocabulary_size >= R*O)
+            if redraw_prefix == False:
+                assert(vocabulary_size >= R)
 
             vocabulary = list(range(vocabulary_size))
 
-            shared_seq_set, reduced_vocabulary = generate_disjoint_sequences(R,O,vocabulary)    
+            shared_seq_set, reduced_vocabulary = generate_disjoint_sequences(R, O,
+                                                                             vocabulary,
+                                                                             redraw_overlaps)    
 
             for cs in range(S):
                 this_shared_seq = shared_seq_set[np.random.randint(R)]  ## pick random shared subsequence
                 ## starting position of shared subsequence
-                start_position = np.random.randint(low=minimal_prefix_length,high=C-O-minimal_postfix_length+1) 
-                prefix, reduced_vocabulary = select_random_elements_from_vocabulary(start_position,reduced_vocabulary,redraw = redraw)
-                postfix, reduced_vocabulary = select_random_elements_from_vocabulary(C-(start_position+O),reduced_vocabulary,redraw = redraw)
+                start_position = 1#np.random.randint(low=minimal_prefix_length,
+                                 #                  high=C-O-minimal_postfix_length+1) 
+
+                prefix, reduced_vocabulary = select_random_elements_from_vocabulary(start_position,
+                                                                                    reduced_vocabulary,
+                                                                                    redraw=redraw_prefix)
+                postfix, reduced_vocabulary = select_random_elements_from_vocabulary(C-(start_position+O),
+                                                                                     reduced_vocabulary,
+                                                                                     redraw=redraw_postfix)
                 seq_set += [prefix + this_shared_seq + postfix]
-                seq_set_intervals += [np.random.uniform(low=inter_elem_intv_min,high=inter_elem_intv_max,size=C-1)]
+                seq_set_intervals += [np.random.uniform(low=inter_elem_intv_min,
+                                                        high=inter_elem_intv_max,size=C-1)]
         
     return seq_set, shared_seq_set, vocabulary, seq_set_intervals
 
@@ -277,7 +302,7 @@ def transform_sequence(seq, alphabet):
 
     assert(max(seq)<=len(A))
     ## alphabet too small
-    
+   
     seq_transformed = []
     for s in seq:
         seq_transformed += [A[s]]
@@ -492,9 +517,6 @@ def generate_sequence_set_instance(
                 t = seq_set_instance[cs]['times'][-1] + \
                     np.random.uniform(low  = inter_seq_intv_min, high = inter_seq_intv_max) ## start of next sequence
 
-            #print(seq_set_instance[cs])
-            #print(np.diff(seq_set_instance[cs]['times']))        
-
             ## truncate sequence set instance at stop time
             elements = np.array(seq_set_instance[cs]['elements'])
             times = np.array(seq_set_instance[cs]['times'])        
@@ -513,11 +535,7 @@ def generate_sequence_set_instance(
 
         print('\n######################################\n')        
         print("Number of sequences in sequence set instance: %d" % (len(seq_set_instance)))
-
-        #import pprint
-        #pp = pprint.PrettyPrinter(depth=4)
-        #pp.pprint(seq_set_instance)        
-                       
+ 
     return seq_set_instance, seq_ids
 
 ##############################################################################
@@ -713,10 +731,10 @@ def example():
     ## parameters
 
     vocabulary_size = 26         ## vocabulary size (may be overwritten if redraw==False)
-    S=5                          ## number of sequences
-    C=7                          ## sequence length
-    R=2                          ## number of shared subsequences
-    O=5                          ## length of shared subsequences ("order")
+    S=10                          ## number of sequences
+    C=10                          ## sequence length
+    R=4                          ## number of shared subsequences
+    O=4                          ## length of shared subsequences ("order")
     minimal_prefix_length = 1    ## minimal prefix length
     minimal_postfix_length = 1   ## minimal postfix length
     redraw = False               ## if redraw == True: pre- and postfixes may contain repeating elements    
