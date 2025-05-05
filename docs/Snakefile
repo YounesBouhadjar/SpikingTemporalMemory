@@ -1,0 +1,32 @@
+configfile: "config.yaml"
+MODELS = config["MODELS"]
+
+rule all:
+    input:
+        expand("ModelDescription_{MODEL}.pdf", MODEL=MODELS)        
+
+rule compile_tex_source:
+    input:
+        expand("ModelDescription_{MODEL}.tex", MODEL=MODELS),
+     	expand("figures/NetworkSketch_{MODEL}.pdf", MODEL=MODELS)
+    output:
+        expand("ModelDescription_{MODEL}.pdf", MODEL=MODELS)               
+    run:
+        shell('pdflatex {input}[0]')
+        shell('pdflatex {input}[0]')        
+
+rule convert_network_sketch_to_pdf:
+    input:
+        expand("figures/NetworkSketch_{MODEL}.fodg", MODEL=MODELS)
+     	        
+    output:
+        expand("figures/NetworkSketch_{MODEL}.pdf", MODEL=MODELS)        
+    run:
+        shell('libreoffice --convert-to pdf:draw_pdf_Export {input} --outdir figures')        
+
+rule clean:
+    input:
+        expand("figures/NetworkSketch_{MODEL}.pdf", MODEL=MODELS)    
+    run:
+        shell("rm -f *~ *.log *.aux *.bbl *.blg *.idx *.ilg *.ind *.lof *.out *.pfg *.toc *.soc *.nav *.snm *.bcf *.xml *blx.bib")
+        shell("rm {input}")
