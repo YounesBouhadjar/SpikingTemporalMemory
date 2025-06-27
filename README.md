@@ -14,7 +14,10 @@ A detailed mathematical, implementation agnostic description of the model and it
 
 |  |  | 
 |--|--|
-| [`docs`](docs) | model description|
+| [`docs`](docs) | model description (implementation agnostic)|
+| [`code`](code) | PyNEST implementaton |
+
+
 
 ## References
 
