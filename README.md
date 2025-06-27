@@ -19,7 +19,7 @@ A detailed mathematical, implementation agnostic description of the model and it
 |--|--|
 | [`docs`](docs) | model description (implementation agnostic)|
 | [`PyNEST`](code) | PyNEST implementaton (python package) |
-| &emsp;[`PyNEST/src/microcircuit`](PyNEST/src/stm) | source code |
+| &emsp;[`PyNEST/src/spikingtemporalmemory`](PyNEST/src/spikingtemporalmemory) | source code |
 | &emsp;[`PyNEST/examples`](PyNEST/examples) | examples illustrating usage of the python package |
 | &emsp;[`PyNEST/tests`](PyNEST/tests) | unit tests |
 
