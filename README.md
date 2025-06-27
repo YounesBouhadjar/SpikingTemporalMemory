@@ -2,7 +2,9 @@
 
 ## Overview
 
-This [repository](https://github.com/YounesBouhadjar/SpikingTemporalMemory) contains a detailed mathematical description and a reference implementation of the spiking Temporal Memory (sTM) model developed by [Bouhadjar et al. (2022)][1].
+This [repository](https://github.com/YounesBouhadjar/SpikingTemporalMemory) contains a detailed mathematical description and a reference implementation of the spiking Temporal Memory (sTM) model, originally developed by [Bouhadjar et al. (2022)][1]. 
+...
+Various flavors of the model have been used in a number of follow-up studies ([Bouhadjar et al. (2023a)][2], [Bouhadjar et al. (2023b)][3], [Siegel et al. (2023a)][4], [Siegel et al. (2023b)][5], [Bouhadjar et al. (2025)][6]). 
  
 ## Model description
 
@@ -32,3 +34,5 @@ A detailed mathematical, implementation agnostic description of the model and it
 [5]: <https://doi.org/10.1145/3584954.3585000> "Siegel, S., Ziegler, T., Bouhadjar, Y., Tetzlaff, T., Waser, R., Dittmann, R., & Wouters, D. (2023, April). Demonstration of neuromorphic sequence learning on a memristive array. In Proceedings of the 2023 Annual Neuro-Inspired Computational Elements Conference (pp. 108-114)."
 [Siegel, S., Ziegler, T., Bouhadjar, Y., Tetzlaff, T., Waser, R., Dittmann, R., & Wouters, D. (2023, April). Demonstration of neuromorphic sequence learning on a memristive array. In Proceedings of the 2023 Annual Neuro-Inspired Computational Elements Conference (pp. 108-114).](https://doi.org/10.1145/3584954.3585000)
 
+[6]: <> "Bouhadjar Y., Lober M., Neftci E., Diesmann M., Tetzlaff T. (2025). Unsupervised continual learning of complex sequences in spiking neuronal networks. Proceedings of the International Conference on Neuromorphic Systems (ICONS'25)" 
+[Bouhadjar Y., Lober M., Neftci E., Diesmann M., Tetzlaff T. (2025). Unsupervised continual learning of complex sequences in spiking neuronal networks. Proceedings of the International Conference on Neuromorphic Systems (ICONS'25)]()
