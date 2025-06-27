@@ -8,14 +8,13 @@ Various flavors of the model have been used in a number of follow-up studies ([B
  
 ## Model description
 
-A detailed mathematical, implementation agnostic description of the model and its parameters is provided [here](docs/model_description/ModelDescription_SpikingTemporalMemory.pdf).
+A detailed mathematical, implementation agnostic description of the model and its parameters is provided [here](docs/ModelDescription_SpikingTemporalMemory.pdf).
 
 ## Repository contents
 
 |  |  | 
 |--|--|
-| [`docs`](docs) | documentation|
-| &emsp;[`docs/model_description`](docs/model_description) | model description (implementation agnostic) |
+| [`docs`](docs) | model description|
 
 ## References
 
