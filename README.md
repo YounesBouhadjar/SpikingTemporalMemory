@@ -34,5 +34,5 @@ A detailed mathematical, implementation agnostic description of the model and it
 [5]: <https://doi.org/10.1145/3584954.3585000> "Siegel, S., Ziegler, T., Bouhadjar, Y., Tetzlaff, T., Waser, R., Dittmann, R., & Wouters, D. (2023, April). Demonstration of neuromorphic sequence learning on a memristive array. In Proceedings of the 2023 Annual Neuro-Inspired Computational Elements Conference (pp. 108-114)."
 [Siegel, S., Ziegler, T., Bouhadjar, Y., Tetzlaff, T., Waser, R., Dittmann, R., & Wouters, D. (2023, April). Demonstration of neuromorphic sequence learning on a memristive array. In Proceedings of the 2023 Annual Neuro-Inspired Computational Elements Conference (pp. 108-114).](https://doi.org/10.1145/3584954.3585000)
 
-[6]: <> "Bouhadjar Y., Lober M., Neftci E., Diesmann M., Tetzlaff T. (2025). Unsupervised continual learning of complex sequences in spiking neuronal networks. Proceedings of the International Conference on Neuromorphic Systems (ICONS'25)" 
-[Bouhadjar Y., Lober M., Neftci E., Diesmann M., Tetzlaff T. (2025). Unsupervised continual learning of complex sequences in spiking neuronal networks. Proceedings of the International Conference on Neuromorphic Systems (ICONS'25)]()
+[6]: <> "" 
+Bouhadjar Y., Lober M., Neftci E., Diesmann M., Tetzlaff T. (2025). Unsupervised continual learning of complex sequences in spiking neuronal networks. Proceedings of the International Conference on Neuromorphic Systems (ICONS'25)
