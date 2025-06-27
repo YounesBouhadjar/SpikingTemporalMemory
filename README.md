@@ -10,13 +10,18 @@ Various flavors of the model have been used in a number of follow-up studies ([B
 
 A detailed mathematical, implementation agnostic description of the model and its parameters is provided [here](docs/ModelDescription_SpikingTemporalMemory.pdf).
 
+## Model implementations
+* [PyNEST](PyNEST/README.md)
+
 ## Repository contents
 
 |  |  | 
 |--|--|
 | [`docs`](docs) | model description (implementation agnostic)|
-| [`code`](code) | PyNEST implementaton |
-
+| [`PyNEST`](code) | PyNEST implementaton (python package) |
+| &emsp;[`PyNEST/src/microcircuit`](PyNEST/src/stm) | source code |
+| &emsp;[`PyNEST/examples`](PyNEST/examples) | examples illustrating usage of the python package |
+| &emsp;[`PyNEST/tests`](PyNEST/tests) | unit tests |
 
 
 ## References
@@ -38,3 +43,20 @@ A detailed mathematical, implementation agnostic description of the model and it
 
 [6]: <> "" 
 Bouhadjar Y., Lober M., Neftci E., Diesmann M., Tetzlaff T. (2025). Unsupervised continual learning of complex sequences in spiking neuronal networks. Proceedings of the International Conference on Neuromorphic Systems (ICONS'25)
+
+## Contact
+- [Younes Bouhadjar](mailto:y.bouhadjar@fz-juelich.de)
+- [Melissa Lober](mailto:m.lober@fz-juelich.de)
+- [Tom Tetzlaff](mailto:t.tetzlaff@fz-juelich.de)
+
+## Contribute
+We welcome contributions to the documentation and the code. For bug reports, feature requests, documentation improvements, or other issues, please create a [GitHub issue](https://github.com/YounesBouhadjar/SpikingTemporalMemory/issues/new/choose).
+
+## License
+
+The material in this repository is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa]. For details, see [here](LICENSES/CC-BY-NC-SA-4.0.txt). 
+  [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
+
+[cc-by-nc-sa]: http://creativecommons.org/licenses/by-nc-sa/4.0/
+[cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
+[cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
