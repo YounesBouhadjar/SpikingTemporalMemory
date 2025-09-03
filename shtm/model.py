@@ -46,8 +46,6 @@ from fna.decoders.readouts import Readout
 
 import sys
 import wandb
-sys.path.append("../../figures")
-from utils import plot_spikes
 import matplotlib.pyplot as plt
 
 class Model:
@@ -111,15 +109,9 @@ class Model:
 
         self.vocabulary = vocabulary
         self.vocab_size = len(vocabulary)
-        #self.length_sequence = len(self.sequences[0])
-        #self.num_sequences = len(self.sequences)
 
         # initialize the NEST kernel
         self.__setup_nest()
-
-        # get time constant for dendriticAP rate
-        #self.params['soma_params']['tau_h'] = self.__get_time_constant_dendritic_rate(
-        #    calibration=self.params['calibration'])
 
 
     def __setup_nest(self):
@@ -186,7 +178,7 @@ class Model:
 
         nest.Connect(self.multimeter_idend, self.exc_neurons)
 
-        self.__set_min_synaptic_strength()
+        #self.__set_min_synaptic_strength()
 
 
     def simulate(self, sim_time, save_data=False):
@@ -195,6 +187,7 @@ class Model:
         # the simulation time is set during the creation of the network  
         if nest.Rank() == 0:
             print('\nSimulating {} ms.'.format(sim_time))
+
         nest.Simulate(sim_time)
 
         if save_data:
@@ -286,6 +279,10 @@ class Model:
 
         # create a spike recorder for inh neurons
         self.spike_recorder_inh = nest.Create('spike_recorder')
+
+
+    def set_status(self, multimeter, spec_dict):
+        nest.SetStatus(multimeter, spec_dict)
 
 
     def __create_weight_recorder(self):
@@ -501,9 +498,11 @@ class Model:
             self.spike_recorder_soma.n_events = 0
             self.multimeter_idend.n_events = 0
 
-
         start_time = stop - duration
         end_time = stop
+
+        sys.path.append("../../figures")
+        from utils import plot_spikes
 
         fig = plot_spikes(somatic_spikes, [[]],
                     dendritic_current,
@@ -528,7 +527,7 @@ class Model:
 
         plt.close()
 
-    def train_readout(self, state_matrix, labels, num_ele=10):
+    def train_readout(self, state_matrix, labels, plot_readout=False, num_ele=10):
 
         r_params = {}
         r_params["task"] = "prediction"
@@ -543,9 +542,6 @@ class Model:
         ls = np.concatenate(labels[-num_ele:], axis=0) #np.array(labels[i])
         state_matrices = np.concatenate(state_matrix[-num_ele:], axis=1)
 
-        #ls = np.concatenate(labels, axis=0) #np.array(labels[i])
-        #state_matrices = np.concatenate(state_matrix, axis=1)
-
         readout.train("batch_label", state_matrices, ls)
 
         performance = readout.evaluate(process_output_method="k-WTA",
@@ -557,7 +553,7 @@ class Model:
         print(f'Performance accuracy: {acc} and mse: {mse}')
 
         ############################
-        if False:
+        if plot_readout:
             fig=plt.figure()
 
             plt.pcolor(state_matrices,
@@ -621,8 +617,7 @@ class Model:
 
         print('\nLoad connections ...')
         data_path = helper.get_data_path(self.params['data_path'], self.params['label'])
-        #conns = np.load('%s/%s.npy' % (data_path, label))
-        conns = np.load('/work/users/bouhadjar/data/sequence_learning_performance/sequence_learning_and_prediction_task_complexity_2/80e0201deb1a3d50935aca587d82bb6a/ee_connections.npy')
+        conns = np.load('%s/%s.npy' % (data_path, label))
         conns_tg = [int(conn[0]) for conn in conns]
         conns_src = [int(conn[1]) for conn in conns]
         conns_weights = [conn[2] for conn in conns]

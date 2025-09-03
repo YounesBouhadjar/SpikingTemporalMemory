@@ -62,7 +62,9 @@ model stdsp_synapse:
     # depress synapse
     if delta_t < dt_max:
       p = Pmax * ( p / Pmax  - ( lambda_minus * ( p / Pmax )**mu_minus * post_trace ) )
-      p = max( Pmin, p )
+      p = max(Pmin, p)
+      #p_ real = p - lambda_minus * Pmax
+      #p = max(Pmin, p_)
 
     if p > th_perm:
       w = Wmax

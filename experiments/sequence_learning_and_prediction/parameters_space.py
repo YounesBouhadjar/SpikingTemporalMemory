@@ -13,15 +13,16 @@ p['data_path']['project_name'] = 'sequence_learning_performance'
 p['data_path']['parameterspace_label'] = 'sequence_learning_and_prediction_task_complexity_2'
 
 # parameters for setting up the network  
-p['M'] = 26                  # number of subpopulations. Note that we use here 6 subpopulations rather than 14 (see Bouhadjar et al. 2022). This is just because we would like to accelerate the simulation, as the set of sequences in this specific experiment requires the use of only 6 subpopulations. We use M=14 in other experiments with more complex tasks such in the prediction performance experiments.
-p['n_E'] = 240 #166 #300          # number of excitatory neurons per subpopulation
+p['M'] = 26                  # number of subpopulations. 
+
+p['n_E'] = 240               # number of excitatory neurons per subpopulation
 p['n_I'] = 1                 # number of inhibitory neurons per subpopulation
 p['L'] = 1                   # number of subpopulations that represents one sequence element
 p['pattern_size'] = 20       # sparse set of active neurons per subpopulation
 
 # connection details
 p['rule'] = 'fixed_indegree'                          
-p['connection_prob'] = 0.15#0.2
+p['connection_prob'] = 0.15
 
 # neuron parameters of the excitatory neurons
 p['soma_model'] = 'iaf_psc_exp_nonlineardendrite_neuron'
@@ -72,17 +73,17 @@ p['syn_dict_ee']['weight'] = 0.                      # synaptic weight
 p['syn_dict_ee']['delay'] = 2.0
 p['syn_dict_ee']['synapse_model'] = 'stdsp_synapse'  # synapse model
 p['syn_dict_ee']['th_perm'] = 10.                    # synapse maturity threshold
-p['syn_dict_ee']['tau_perm'] = 50000                 # time constant of permanence leakage
+p['syn_dict_ee']['tau_perm'] = 70000                 # time constant of permanence leakage (50000 (20) 80000 (40) ,50000 or 70000 (40)  70000 (60))
 p['syn_dict_ee']['tau_tr_pre'] = 20.                 # plasticity time constant (potentiation)
 p['syn_dict_ee']['tau_tr_post'] = 20. 
 p['syn_dict_ee']['receptor_type'] = 2                # receptor corresponding to the dendritic input
-p['syn_dict_ee']['lambda'] = 0.6      # potentiation rate
+p['syn_dict_ee']['lambda'] = 0.6                     # potentiation rate ( 0.6 (20) 0.6 (40) 0.7 (40), 0.6 (60))
 p['syn_dict_ee']['mu_plus'] = 0.                     # permanence dependence exponent, potentiation
 # p['syn_dict_ee']['mu_minus'] = 0.                  # permanence dependence exponent, depression
 p['syn_dict_ee']['Wmax'] = 1.1 * p['soma_params']['theta_dAP'] / p['convergence']   # Maximum allowed weight
 p['syn_dict_ee']['Pmax'] = 20.                       # Maximum allowed permanence
 p['syn_dict_ee']['Pmin'] = 1.                        # Minimum allowed permanence
-p['syn_dict_ee']['lambda_minus'] = 0.8               # depression rate
+p['syn_dict_ee']['lambda_minus'] = 0.02              # depression rate (# 0.8 (20) 0.1 (40)  0.3 (40), 0.02 (60))
 p['syn_dict_ee']['dt_min'] = 4.                      # minimum time lag of the STDP window
 p['inh_factor'] = 7.
 p['p_target'] = 0
@@ -128,7 +129,7 @@ p['dt'] = 0.1                                  # simulation time resolution (ms)
 p['overwrite_files'] = True                    # if True, data will be overwritten,
                                                # if False, a NESTError is raised if the files already exist
 #p['seed'] = para.ParameterRange([10, 20, 30])           # seed for NEST
-p['seed'] = para.ParameterRange([11])           # seed for NEST
+p['seed'] = para.ParameterRange([11, 12, 13])           # seed for NEST
 p['print_simulation_progress'] = False         # print the time progress.
 p['n_threads'] = 16                             # number of threads per MPI process 
 p['pad_time'] = 5.
@@ -148,13 +149,13 @@ p['active_weight_recorder'] = False            # if turned on, the weights are r
 
 # task parameters
 p['task'] = {}
-p['task']['vocabulary_size'] = 26                 # vocabulary size
-p['task']['S'] = 2#2#6                               # number of sequences
-p['task']['C'] = 5#5#6                               # sequence length
-p['task']['R'] = 1#1#4para.ParameterRange(np.arange(2,6+2,2))                              # number of shared subsequences
-p['task']['O'] = 3#3#4para.ParameterRange(np.arange(2,8+2,2))                              # length of shared subsequences ("order")
+p['task']['vocabulary_size'] = 26                  # vocabulary size
+p['task']['S'] = 1                                 # number of sequences
+p['task']['C'] = 40                                # sequence length
+p['task']['R'] = 0                                 # number of shared subsequences
+p['task']['O'] = 0                                 # length of shared subsequences ("order")
 p['task']['seed'] = 15                             # seed number
 
 # setup the training loop  
-p['learning_episodes'] = 400                  # total number of training episodes ('repetitions of the sequence sets')
+p['learning_episodes'] = 100                  # total number of training episodes ('repetitions of the sequence sets')
 p['episodes_to_testing'] = 100                # number of episodes after which we measure the prediction perfomance
