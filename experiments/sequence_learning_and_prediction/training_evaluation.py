@@ -54,7 +54,8 @@ def create_parser():
     parser_.add_argument("--exp-params-idx", dest="exp_params_idx", type=int, default=0)
     parser_.add_argument("--batch-id", dest="batch_idx", type=int, default=0)
     parser_.add_argument("--jobmax", dest="jobmax", type=int, default=0)
-    parser_.add_argument("--hwb", dest="run_hwb", type=bool, default=True, help="enabled if hyperparameter search is executed")
+    parser_.add_argument("--hwb", dest="run_hwb", action='store_true', help="enabled if hyperparameter search is executed")
+    parser_.add_argument("--avg_seed", dest="avg_seed", action='store_false', help="enabled if hyperparameter search is executed")
     #parser_.add_argument("--wbm", dest="wb_mode", type=str, default="offline")
     parser_.add_argument("--wbm", dest="wb_mode", type=str, default="online")
     return parser_
@@ -81,20 +82,21 @@ def generate_reference_data(PS, arr_id=None):
     else:
         params = PL[array_id]
 
+        # TODO: alternatively these could be added to args (see above)
+        #params['syn_dict_ee']['lambda_h'] = wandb.config['lambda_h']
+    
     if args.run_hwb:
         wandb.init(mode=args.wb_mode,
                    project=PS['data_path']['project_name'],
-                   config=wandb.config #TODO: find a way to log params as well
-                  )
+                   config=wandb.config) #TODO: find a way to log params as well
 
-        # TODO: alternatively these could be added to args (see above)
-        #params['syn_dict_ee']['lambda_h'] = wandb.config['lambda_h']
         try:
             params['syn_dict_ee']['tau_perm'] = wandb.config['tau_perm']
             params['syn_dict_ee']['lambda_minus'] = wandb.config['lambda_minus']
             params['syn_dict_ee']['lambda'] = wandb.config['lambda']
         except:
             pass
+
         try:
             params['task']['S'] = wandb.config['S']
             params['task']['C'] = wandb.config['C']
@@ -114,8 +116,7 @@ def generate_reference_data(PS, arr_id=None):
         wandb.init(mode=args.wb_mode,
                    project=params['data_path']['project_name'],
                    name = params['label'],
-                   config = params
-                  )
+                   config = params)
     
     # ###########################################################
     # import nestml module
@@ -151,7 +152,8 @@ def generate_reference_data(PS, arr_id=None):
     stop = 5000000.
     seq_set_instance_size = 1000
     subset_size           = None
-    order                 = 'fixed'      ## 'fixed', 'random'
+    #order                 = 'fixed'      ## 'fixed', 'random'
+    order                 = 'fixed'
     #order                 = 'random'      ## 'fixed', 'random'    
     seq_activation_type   = 'consecutive' ## 'consecutive', 'parallel'
     #seq_activation_type   = 'parallel' ## 'consecutive', 'parallel'    
@@ -178,26 +180,25 @@ def generate_reference_data(PS, arr_id=None):
     alphabet = sg.latin_alphabet                    # function defining type of alphabet (only important for printing)
    
     ####################    
-    
     print("Generate sequences ...")
     seq_set, shared_seq_set, vocabulary, seq_set_intervals = sg.generate_sequences(S, C, R, O,
-                                                                               vocabulary_size,
-                                                                               minimal_prefix_length,
-                                                                               minimal_postfix_length,
-                                                                               seed,
-                                                                               redraw,
-                                                                               inter_elem_intv_min,
-                                                                               inter_elem_intv_max)
+                                                                           vocabulary_size,
+                                                                           minimal_prefix_length,
+                                                                           minimal_postfix_length,
+                                                                           seed,
+                                                                           redraw,
+                                                                           inter_elem_intv_min,
+                                                                           inter_elem_intv_max)
 
     shared_seq_set_transformed = sg.transform_sequence_set(shared_seq_set, alphabet)    
     seq_set_transformed = sg.transform_sequence_set(seq_set, alphabet)
     vocabulary_transformed = sg.transform_sequence(vocabulary, alphabet)
 
     sg.print_sequences(seq_set_transformed,
-                       shared_seq_set_transformed,
-                       vocabulary_transformed,
-                       seq_set_intervals,
-                       label=' (latin)')
+                   shared_seq_set_transformed,
+                   vocabulary_transformed,
+                   seq_set_intervals,
+                   label=' (latin)')
 
     print("Generate sequence instance ...")
     seq_set_instance, seq_ids = sg.generate_sequence_set_instance(
@@ -214,10 +215,6 @@ def generate_reference_data(PS, arr_id=None):
     )
 
     sim_stop = seq_set_instance[max(seq_set_instance.keys())]['times'][-1]
-    num_last_instance = max(seq_set_instance.keys())
-    print('\nNumber and time of last element in last sequence instance:', num_last_instance, sim_stop)
-    print('\nStop:', stop)
-
     sim_stop = int(sim_stop) + 10.
     print('\nSim Stop:', sim_stop)
 
@@ -282,13 +279,11 @@ def generate_reference_data(PS, arr_id=None):
     # ===============================================================
     params['M'] = len(vocabulary_transformed)
     model_instance = model.Model(params,
-                                 seq_set,
                                  vocabulary_transformed)
     time_model = time.time()
 
-    model_instance.create(element_activations,
-                          seq_set_instance,
-                          sim_stop, duration)
+    model_instance.create()
+
     time_create = time.time()
 
     # ###############################################################
@@ -309,26 +304,39 @@ def generate_reference_data(PS, arr_id=None):
     counter_abort = 0
     exp_seq_set_instance_size = max(seq_set_instance.keys())
     record_ts = True
+    early_abort = True
+    early_break = True
+
+    # set input
+    model_instance.set_input(element_activations, seq_set_instance)
+
     for i in range(S-1, exp_seq_set_instance_size-1, 10*S):
         print("Simulate step", i)
         tnext = seq_set_instance[i+1]['times'][0]
         sim_time = int(tnext - tprev - 10.)
         model_instance.simulate(sim_time, save_data=False)
 
-        err, fn, fp = model_instance.measure_fp_fn(seq_set_instance,
-                                                   i+1)
+        err, fn, fp = model_instance.measure_fp_fn(S=S, #TODO
+                                                   seq_set_instances=seq_set_instance,
+                                                   seq_set_instance_id=i+1,
+                                                   load_data=False)
+
         #model_instance.plot_activity(stop=tnext-10,
         #                             duration=sim_time)
+
+        err /= C
+
         wandb.log({"err"+str(arr_id): err,
                    "fn"+str(arr_id): fn,
                    "fp"+str(arr_id): fp})
 
-        if err < 0.1 and record_ts:
+        if err < 0.01 and record_ts:
             wandb.log({"ts"+str(arr_id): i})
             ts = i 
             record_ts = False
-            
-            break
+        
+            if early_break:
+                break
 
         time_simulate = time.time()
         tprev += sim_time
@@ -340,7 +348,7 @@ def generate_reference_data(PS, arr_id=None):
         else:
             counter_abort = 0
 
-        if counter_abort > 10:
+        if counter_abort > 20 and early_abort:
             break
 
         err_prev = err
@@ -391,7 +399,7 @@ if __name__ == '__main__':
 
     print("args.exp_params", args.exp_params)
 
-    if args.run_hwb:
+    if args.avg_seed:
 
         err_all = []
         fn_all = []
@@ -417,5 +425,11 @@ if __name__ == '__main__':
                    "fp": fp,
                    "ts": ts})
     else:
-        generate_reference_data(PS, args.exp_params_idx)
+        err, fn, fp, ts = generate_reference_data(PS, args.exp_params_idx)
+
+        wandb.log({"err": err,
+                   "fn": fn,
+                   "fp": fp,
+                   "ts": ts})
+
     wandb.finish()

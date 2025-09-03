@@ -100,7 +100,39 @@ def select_random_elements_from_vocabulary(N, vocabulary, redraw=False):
     return chars, vocabulary
 
 ##############################################################################
+def generate_multiple_sequences(S, C, R, O, vocabulary_size, minimal_prefix_length = 0, minimal_postfix_length = 0, seeds = [None], redraw = False, inter_elem_intv_min = 50., inter_elem_intv_max = 50.):    
+    seq_sets = []
+    seq_sets_intervals = []
+    for seed in seeds:
+        seq_set, shared_seq_set, vocabulary, seq_set_intervals = generate_sequences(S, C, R, O,
+                                                                           vocabulary_size,
+                                                                           minimal_prefix_length,
+                                                                           minimal_postfix_length,
+                                                                           seed,
+                                                                           redraw,
+                                                                           inter_elem_intv_min,
+                                                                           inter_elem_intv_max)
 
+        
+        shared_seq_set_transformed = transform_sequence_set(shared_seq_set, latin_alphabet)    
+        seq_set_transformed = transform_sequence_set(seq_set, latin_alphabet)
+        vocabulary_transformed = transform_sequence(vocabulary, latin_alphabet)
+
+        print_sequences(seq_set_transformed,
+                   shared_seq_set_transformed,
+                   vocabulary_transformed,
+                   seq_set_intervals,
+                   label=' (latin)')
+
+        seq_sets += seq_set
+        seq_sets_intervals += seq_set_intervals
+
+        import pdb
+        pdb.set_trace()
+
+    return seq_sets, vocabulary, seq_sets_intervals
+
+##############################################################################
 def generate_sequences(S, C, R, O, vocabulary_size, minimal_prefix_length = 0, minimal_postfix_length = 0, seed = None, redraw = False, inter_elem_intv_min = 50., inter_elem_intv_max = 50.):    
     '''
     Generates a set of S sequences of length C from a vocabulary of defined size. 
@@ -377,6 +409,42 @@ def print_sequences(seq_set,shared_seq_set,vocabulary,seq_set_intervals,label=''
 
 ##############################################################################
 
+def generate_multiple_sequence_set_instance(
+        seq_set,
+        seq_set_intervals,        
+        start,
+        stop,
+        seq_set_instance_size = None,
+        subset_size           = None,
+        order                 = 'fixed',
+        seq_activation_type   = 'consecutive',
+        inter_seq_intv_min    = 100.,
+        inter_seq_intv_max    = 100.,
+):
+
+    for i in range(2):
+        seq_set_instance, seq_ids = generate_sequence_set_instance(
+            seq_set,
+            seq_set_intervals,
+            start=start,
+            stop=stop,
+            seq_set_instance_size = seq_set_instance_size,
+            subset_size           = subset_size,
+            order                 = order,
+            seq_activation_type   = seq_activation_type,
+            inter_seq_intv_min    = inter_seq_intv_min,
+            inter_seq_intv_max    = inter_seq_intv_max,
+            start_id              = i * seq_set_instance_size
+        )
+
+        if i == 0:
+            seq_set_instances = seq_set_instance
+        else:
+            seq_set_instances = seq_set_instances | seq_set_instance
+
+    return seq_set_instances
+
+
 def generate_sequence_set_instance(
         seq_set,
         seq_set_intervals,        
@@ -388,6 +456,7 @@ def generate_sequence_set_instance(
         seq_activation_type   = 'consecutive',
         inter_seq_intv_min    = 100.,
         inter_seq_intv_max    = 100.,
+        start_id              = 0
 ):
     
     '''
@@ -493,40 +562,45 @@ def generate_sequence_set_instance(
         elif order == 'random':        
             seq_ids = list(np.random.choice(list(range(S)), size = seq_set_instance_size))
 
+        elif order == 'consecutive':
+            block = np.repeat(np.arange(S), int(seq_set_instance_size/ (S+1) ))
+            reps = -(-seq_set_instance_size // len(block))
+            seq_ids = np.tile(block, reps)[:seq_set_instance_size]
+
         #print(seq_ids)
         assert(len(seq_ids)==seq_set_instance_size)
 
         ## create instance of list of sequences
         seq_set_instance = {}
         t = start
-        to_be_removed = []    
-        for cs in range(seq_set_instance_size):    
-            seq_set_instance[cs] = {}
-
+        to_be_removed = []
+        for cs, cis in enumerate(range(start_id, seq_set_instance_size+start_id)):
+            seq_set_instance[cis] = {}
+        
             ## sequence elements
-            seq_set_instance[cs]['elements'] = seq_set[seq_ids[cs]]
-            seq_set_instance[cs]['seq'] = seq_ids[cs]
+            seq_set_instance[cis]['elements'] = seq_set[seq_ids[cs]]
+            seq_set_instance[cis]['seq'] = seq_ids[cs]
             
             ## sequence times
-            seq_set_instance[cs]['times'] = list(t + np.array(seq_set_times[seq_ids[cs]])) ## element occurence times for current sequence
+            seq_set_instance[cis]['times'] = list(t + np.array(seq_set_times[seq_ids[cs]])) ## element occurence times for current sequence
 
             if seq_activation_type == 'parallel':
                 t =  np.random.uniform(low  = start, high = stop)
 
             elif seq_activation_type == 'consecutive':            
-                t = seq_set_instance[cs]['times'][-1] + \
+                t = seq_set_instance[cis]['times'][-1] + \
                     np.random.uniform(low  = inter_seq_intv_min, high = inter_seq_intv_max) ## start of next sequence
 
             ## truncate sequence set instance at stop time
-            elements = np.array(seq_set_instance[cs]['elements'])
-            times = np.array(seq_set_instance[cs]['times'])        
+            elements = np.array(seq_set_instance[cis]['elements'])
+            times = np.array(seq_set_instance[cis]['times'])        
             ind = np.where(times>stop)[0]
             if len(ind) > 0:
                 print("\nWARNING: sequence %d truncated to fit stop time." % (cs))
                 times=np.delete(times,ind)
                 elements=np.delete(elements,ind)
-                seq_set_instance[cs]['elements']=list(elements)
-                seq_set_instance[cs]['times']=list(times)            
+                seq_set_instance[cis]['elements']=list(elements)
+                seq_set_instance[cis]['times']=list(times)            
 
                 ## remove empty sequences
                 if len(times)==0:

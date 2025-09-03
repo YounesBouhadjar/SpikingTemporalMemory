@@ -138,19 +138,6 @@ def generate_reference_data(arr_id=None):
     S = int(params['task']['S'])                             # number of sequences
     C = int(params['task']['C'])                             # sequence length
 
-    start = 100.
-    stop = 5000.
-    seq_set_instance_size = 10
-    subset_size           = None
-    #order                 = 'fixed'      ## 'fixed', 'random'
-    order                 = 'random'      ## 'fixed', 'random'    
-    seq_activation_type   = 'consecutive' ## 'consecutive', 'parallel'
-    #seq_activation_type   = 'parallel' ## 'consecutive', 'parallel'    
-    inter_seq_intv_min    = 50.
-    inter_seq_intv_max    = 55.
-
-    seed = 0 #None              ## RNG seed (int or None)
-
     if R > (S - 2) or O > (C - 2):
 
         wandb.log({"loss": -1,
@@ -171,7 +158,13 @@ def generate_reference_data(arr_id=None):
     seq_set = helper.load_data(params_path,  f'{label}/training_data')
     seq_set_instance = helper.load_data(params_path,  f'{label}/seq_set_instance')
     vocabulary_transformed = helper.load_data(params_path,  f'{label}/vocabulary')
-    
+   
+    sim_stop = seq_set_instance[max(seq_set_instance.keys())]['times'][-1]
+    sim_stop += 10.
+    print('\nSim Stop:', sim_stop)
+
+    duration = seq_set_instance[max(seq_set_instance.keys())]['times'][-1] - seq_set_instance[max(seq_set_instance.keys())-S+1]['times'][0]
+
     #sequences, _, vocabulary = helper.generate_sequences(params['task'],
     #                                                     params['data_path'],
     #                                                     params['label'])
@@ -186,12 +179,29 @@ def generate_reference_data(arr_id=None):
                                  seq_set,
                                  vocabulary_transformed)
 
+    model_instance.plot_activity(stop=sim_stop,
+                                 duration=duration+10.)
+ 
     seq_set_instance_size = max(seq_set_instance.keys())
-    xt, labels = model_instance.load_resampled_data(seq_set_instance,
+    xt, labels, spt = model_instance.load_resampled_data(seq_set_instance,
+                                                         seq_set_instance_size)
+
+    spl_last = []
+    for k, spl in enumerate(spt[-S:]):
+        print(f'\n{k}: {spl}')
+        spl_last += spl[1:]
+        
+    sp_last = np.mean(spl_last)
+        
+    errors, fns, fps = model_instance.measure_fp_fn(seq_set_instance,
                                                     seq_set_instance_size)
-
-    acc = model_instance.train_readout(xt, labels)
-
+        
+    num_ele = int(S)
+    acc, mse, readout = model_instance.train_readout(xt, labels, num_ele)
+    #acc, mse, readout = model_instance.train_readout(xt, labels)
+   
+    model_instance.plot_readout(readout, np.concatenate(xt[-num_ele:], axis=1))
+    
     return acc
 
 if __name__ == '__main__':

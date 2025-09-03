@@ -44,14 +44,16 @@ for batch_id in range(int(np.ceil(1.*N/JOBMAX))):
     file.write('#!/bin/bash\n')
     file.write('#SBATCH --job-name ' + params['data_path']['parameterspace_label'] + '\n')    # set the name of the job
     file.write('#SBATCH --array 0-%d\n' % (batch_size-1))                                     # launch an array of jobs
-    file.write('#SBATCH --time 10-00:00:00\n')                                                   # specify a time limit
+    #file.write('#SBATCH --time 10-00:00:00\n')                                                   # specify a time limit
+    file.write('#SBATCH --time 24:00:00\n')                                                   # specify a time limit
     file.write('#SBATCH --ntasks 1\n')
     file.write('#SBATCH --cpus-per-task %d\n' % params['n_threads'])
     file.write('#SBATCH -o %s' % path + '/log/job_%A_%a.o\n')               # redirect stderr and stdout to the same file
     file.write('#SBATCH -e %s' % path + '/log/job_%A_%a.e\n')               # redirect stderr and stdout to the same file
     file.write('#SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE\n')              # send email notifications
     file.write('#SBATCH --mail-user=%s\n' % email)
-    file.write('#SBATCH --mem-per-cpu=2500\n')                                      # and reserve 6GB of memory
+    #file.write('#SBATCH --mem-per-cpu=2500\n')                                      # and reserve 6GB of memory
+    file.write('#SBATCH --mem-per-cpu=5000\n')                                      # and reserve 6GB of memory
     file.write('source activate spiking-htm\n')                             # activate conda environment
     file.write('wandb agent %s\n' % sweep_id_path)
     #file.write('wandb agent --count 10 ybouhadjar/spiking_tm/21lhbk6o\n')

@@ -63,7 +63,7 @@ class Model:
     In addition, each model may implement other model-specific member functions.
     """
 
-    def __init__(self, params, seq_set, vocabulary):
+    def __init__(self, params, vocabulary):
         """Initialize model and simulation instance, including
 
         1) parameter setting,
@@ -109,9 +109,6 @@ class Model:
         np.random.seed(self.params['seed'])
         random.seed(self.params['seed'])
 
-        # input stream: sequence data
-        self.seq_set = seq_set
-
         self.vocabulary = vocabulary
         self.vocab_size = len(vocabulary)
         #self.length_sequence = len(self.sequences[0])
@@ -142,7 +139,7 @@ class Model:
         })
         nest.set_verbosity("M_ERROR")
 
-    def create(self, element_activations, seq_set_instances, stop, duration=500):
+    def create(self):
         """Create and configure all network nodes (neurons + recording and stimulus devices)
         """
 
@@ -152,11 +149,10 @@ class Model:
         self.__create_neuronal_populations()
 
         # create spike generators
-        self.__create_spike_generators(element_activations,
-                                       seq_set_instances)
+        self.__create_spike_generators()
 
         # create recording devices
-        self.__create_recording_devices(stop, duration)
+        self.__create_recording_devices()
 
 #        # create weight recorder
 #        if self.params['active_weight_recorder']:
@@ -190,22 +186,9 @@ class Model:
 
         nest.Connect(self.multimeter_idend, self.exc_neurons)
 
-        if self.params['record_idend_last_episode']:
-            nest.Connect(self.multimeter_idend_last_episode, self.exc_neurons)
-#
-#        # set min synaptic strength
-#        self.__set_min_synaptic_strength()
-#
-#        if self.params['add_bkgd_noise']:
-#            self.__connect_noise_sources()
-#
-#        if self.params['add_stimulus_noise']:
-#            nest.Connect(self.packet_parrot, self.spike_packet_recorder)
-#
-#        # connect the voltmeter for recording membrane voltages
-#        if self.params['record_voltage'] and self.params['add_bkgd_noise']:
-#            nest.Connect(self.vm, self.exc_neurons)
-#
+        self.__set_min_synaptic_strength()
+
+
     def simulate(self, sim_time, save_data=False):
         """Run simulation.
         """
@@ -223,22 +206,18 @@ class Model:
             fname = 'somatic_spikes'
             print("save data to %s/%s ..." % (self.data_path, fname))
             np.save('%s/%s' % (self.data_path, fname), data)
- 
+
+            # record dendritic current
+            senders = nest.GetStatus(self.multimeter_idend)[0]['events']['senders']
+            times = nest.GetStatus(self.multimeter_idend)[0]['events']['times']
+            I_dends = nest.GetStatus(self.multimeter_idend)[0]['events']['I_dend']
+
+            data = np.array([senders, times, I_dends]).T
+                    
             fname = 'idend'
             print("save data to %s/%s ..." % (self.data_path, fname))
             np.save('%s/%s' % (self.data_path, fname), data)
 
-            # record dendritic currents of last episode
-            if self.params['record_idend_last_episode']:
-                senders = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['senders']
-                times = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['times']
-                I_dends = nest.GetStatus(self.multimeter_idend_last_episode)[0]['events']['I_dend']
-
-                data = np.array([senders, times, I_dends]).T
-                    
-                fname = 'idend_last_episode'
-                print("save data to %s/%s ..." % (self.data_path, fname))
-                np.save('%s/%s' % (self.data_path, fname), data)
         #else:
             # reset recorders
         #    self.spike_recorder_soma.n_events = 0
@@ -259,12 +238,17 @@ class Model:
                                        self.params['n_I'] * self.num_subpopulations,
                                        params=self.params['inhibit_params'])
 
-    def __create_spike_generators(self, element_activations, seq_set_instances):
+    def __create_spike_generators(self):
         """Create spike generators
         """
 
         # create external spike sources
         self.input_excitation_soma = nest.Create('spike_generator', self.vocab_size)
+        if self.params['sparse_first_char']:
+            self.input_excitation_dend = nest.Create('spike_generator', self.vocab_size)
+
+
+    def set_input(self, element_activations, seq_set_instances):
 
         # round element activation times to simulation grid
         element_activations[:, 1] = np.round(element_activations[:, 1]/self.params['dt'])*self.params['dt']
@@ -283,14 +267,14 @@ class Model:
             
             counts_eles = Counter(first_eles)
 
-            self.input_excitation_dend = {}
+            #self.input_excitation_dend = {}
             for ele, v in counts_eles.items():
                 
-                self.input_excitation_dend[ele] = nest.Create('spike_generator')
                 x = np.where(first_eles == ele)
                 nest.SetStatus(self.input_excitation_dend[ele], {'spike_times': first_times[x]})
-        
-    def __create_recording_devices(self, stop, duration=500):
+
+
+    def __create_recording_devices(self):
         """Create recording devices
         """
 
@@ -303,15 +287,6 @@ class Model:
         # create a spike recorder for inh neurons
         self.spike_recorder_inh = nest.Create('spike_recorder')
 
-        if self.params['record_idend_last_episode']:
-
-            self.multimeter_idend_last_episode = nest.Create('multimeter',
-                                                             params={'record_from': ['I_dend']})
-            idend_dict = {'interval': self.params['idend_recording_interval'],
-                          'start': stop-duration,
-                          'stop': stop}
-
-            nest.SetStatus(self.multimeter_idend_last_episode, idend_dict)
 
     def __create_weight_recorder(self):
         """Create weight recorder
@@ -319,7 +294,8 @@ class Model:
 
         self.wr = nest.Create('weight_recorder')
         #self.params['syn_dict_ee']['weight_recorder'] = self.wr
-        nest.CopyModel(self.params['syn_dict_ee']['synapse_model'], 'stdsp_synapse_rec', {'weight_recorder': self.wr})
+        nest.CopyModel(self.params['syn_dict_ee']['synapse_model'],
+                       'stdsp_synapse_rec', {'weight_recorder': self.wr})
         self.params['syn_dict_ee']['synapse_model'] = 'stdsp_synapse_rec'
 
     def __create_noise_sources(self):
@@ -392,7 +368,8 @@ class Model:
                 #    nest.Connect(self.input_excitation_soma[char], self.packet_parrot)
 
         if self.params['sparse_first_char']:
-            for subpopulation_index in self.input_excitation_dend.keys():
+            #for subpopulation_index in self.input_excitation_dend.keys():
+            for subpopulation_index in range(self.vocab_size):
                 subpopulation_neurons = self.__get_subpopulation_neurons(subpopulation_index)
                 nest.Connect(self.input_excitation_dend[subpopulation_index], subpopulation_neurons,
                                  self.params['conn_dict_edx'], syn_spec=self.params['syn_dict_edx'])
@@ -419,7 +396,7 @@ class Model:
 
         print('\nSet min synaptic strength ...')
         connections = nest.GetConnections(synapse_model=self.params['syn_dict_ee']['synapse_model'])
- 
+
         syn_model = self.params['syn_dict_ee_synapse_model']
         if syn_model[:5] == 'stdsp':
             connections.set({'Pmin': connections.p})
@@ -432,17 +409,13 @@ class Model:
 
         return spr_level
 
-    def measure_fp_fn(self, seq_set_instances, seq_set_instance_id, load_data=False):
+    def measure_fp_fn(self, S, seq_set_instances, seq_set_instance_id, load_data=False):
    
-
         if load_data:
-
             somatic_spikes = helper.load_numpy_spike_data(self.data_path, 'somatic_spikes')
             #dendritic_current = helper.load_numpy_spike_data(self.data_path, 'idend_last_episode')
             dendritic_current = helper.load_numpy_spike_data(self.data_path, 'idend')
-
         else:
-
             # record somatic spikes
             times = nest.GetStatus(self.spike_recorder_soma)[0]['events']['times']
             senders = nest.GetStatus(self.spike_recorder_soma)[0]['events']['senders']
@@ -457,24 +430,23 @@ class Model:
             dendritic_current = np.array([senders, times, i_dends]).T
 
             self.spike_recorder_soma.n_events = 0
-            self.multimeter_idend_last_episode.n_events = 0
             self.multimeter_idend.n_events = 0
 
         error, fn, fp = helper.measure_fp_fn(somatic_spikes,
                                              dendritic_current,
-                                             self.seq_set,
+                                             S,
                                              seq_set_instances,
                                              seq_set_instance_id,
                                              self.params,
                                              mode='train')
         return error, fn, fp
 
-    def load_resampled_data(self, seq_set_instances, seq_set_instance_size):
+    def load_resampled_data(self, seq_set, seq_set_instances, seq_set_instance_size):
     
         somatic_spikes = helper.load_numpy_spike_data(self.data_path, 'somatic_spikes')
 
         state_matrix_soma, labels, sps = helper.get_state_matrix(somatic_spikes,
-                                                                 self.seq_set,
+                                                                 seq_set,
                                                                  seq_set_instances,
                                                                  seq_set_instance_size,
                                                                  self.params,
@@ -499,14 +471,36 @@ class Model:
 
         wandb.log({"fig_r": wandb.Image(fig)})
 
-    def plot_activity(self, stop, duration=500):
+    def plot_activity(self, stop, duration=500, load_data=False):
 
-        somatic_spikes = helper.load_numpy_spike_data(self.data_path, 'somatic_spikes')
-        try:
+        if load_data:
+
+            somatic_spikes = helper.load_numpy_spike_data(self.data_path, 'somatic_spikes')
             #dendritic_current = helper.load_numpy_spike_data(self.data_path, 'idend_last_episode')
-            dendritic_current = helper.load_numpy_spike_data(self.data_path, 'idend')
-        except:
-            dendritic_current = [[]]
+            try:
+                #dendritic_current = helper.load_numpy_spike_data(self.data_path, 'idend_last_episode')
+                dendritic_current = helper.load_numpy_spike_data(self.data_path, 'idend')
+            except:
+                dendritic_current = [[]]
+
+        else:
+
+            # record somatic spikes
+            times = nest.GetStatus(self.spike_recorder_soma)[0]['events']['times']
+            senders = nest.GetStatus(self.spike_recorder_soma)[0]['events']['senders']
+
+            somatic_spikes = np.array([senders, times]).T
+
+            #  record dendritic currents
+            senders = nest.GetStatus(self.multimeter_idend)[0]['events']['senders']
+            times = nest.GetStatus(self.multimeter_idend)[0]['events']['times']
+            i_dends = nest.GetStatus(self.multimeter_idend)[0]['events']['I_dend']
+
+            dendritic_current = np.array([senders, times, i_dends]).T
+
+            self.spike_recorder_soma.n_events = 0
+            self.multimeter_idend.n_events = 0
+
 
         start_time = stop - duration
         end_time = stop

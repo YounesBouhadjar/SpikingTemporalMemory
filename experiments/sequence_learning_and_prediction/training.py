@@ -330,8 +330,6 @@ def generate_reference_data(PS, arr_id=None):
     # display prediction performance only for debugging    
     if params['evaluate_performance']:
 
-        #model_instance.plot_activity(stop=sim_stop, duration=duration+10.)
-
         exp_seq_set_instance_size = max(seq_set_instance.keys())
         xt, labels, spt = model_instance.load_resampled_data(seq_set_instance,
                                                              exp_seq_set_instance_size)
