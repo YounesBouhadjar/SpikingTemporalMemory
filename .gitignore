@@ -1,0 +1,4 @@
+*.yaml
+*.pdf
+__pycache__
+*.txt

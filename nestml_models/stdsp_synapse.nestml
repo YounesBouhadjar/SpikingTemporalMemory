@@ -1,0 +1,78 @@
+model stdsp_synapse:
+
+  state:
+    w real = 1.  @nest::weight
+    p real = 1.
+    t_last_pre_spike ms = -1ms
+    t_last_post_spike ms = -1ms
+
+  parameters:
+    d ms = 2.0 ms  @nest::delay # !!! cannot have a variable called "delay"
+    lambda real = .01
+    lambda_minus real = .01
+    tau_tr_pre ms = 20 ms
+    tau_tr_post ms = 20 ms
+    tau_perm ms = 18500 ms
+    mu_plus real = 1
+    mu_minus real = 1
+    Wmax real = 100.
+    Pmax real = 20.
+    Pmin real = 0.
+    th_perm real = 10.
+    dt_min ms = 5. ms
+    dt_max ms = 50. ms
+
+  equations:
+    kernel pre_trace_kernel = exp(-t / tau_tr_pre)
+    inline pre_trace real = convolve(pre_trace_kernel, pre_spikes)
+
+    # all-to-all trace of postsynaptic neuron
+    kernel post_trace_kernel = exp(-t / tau_tr_post)
+    inline post_trace real = convolve(post_trace_kernel, post_spikes)
+
+    p' = (Pmin-p) / tau_perm
+
+  input:
+    pre_spikes <- spike
+    post_spikes <- spike
+    # z_post pA <- continuous
+
+  output:
+    spike
+
+  onReceive(post_spikes):
+    #TODO: remove dt_max (redundant with tau_tr_pre)
+
+    t_last_post_spike = t
+    delta_t ms = ( t + d ) - t_last_pre_spike
+    
+    # potentiate synapse
+    if delta_t < dt_max and delta_t > dt_min:
+      p = Pmax * ( p / Pmax  + ( lambda * ( 1. - ( p / Pmax ) )**mu_plus * pre_trace ) )
+      p = min( p, Pmax )
+
+    elif delta_t < dt_min:
+      p = Pmax * ( p / Pmax  + (lambda * ( 1. - ( p / Pmax ) )**mu_plus * ( pre_trace - exp( - delta_t / tau_tr_pre ) ) ) )
+      p = min( p, Pmax )
+
+  onReceive(pre_spikes):
+    t_last_pre_spike = t
+    delta_t ms = ( t_last_pre_spike + d ) - t_last_post_spike
+
+    # depress synapse
+    if delta_t < dt_max:
+      p = Pmax * ( p / Pmax  - ( lambda_minus * ( p / Pmax )**mu_minus * post_trace ) )
+      p = max(Pmin, p)
+      #p_ real = p - lambda_minus * Pmax
+      #p = max(Pmin, p_)
+
+    if p > th_perm:
+      w = Wmax
+    else:
+      w = 0.
+    
+    # deliver spike to postsynaptic partner
+    emit_spike(w, d)
+
+  update:
+    integrate_odes()
