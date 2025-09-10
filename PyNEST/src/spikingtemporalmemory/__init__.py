@@ -1,2 +1,3 @@
-from shtm import model
-from shtm import helper
+from spikingtemporalmemory import model
+from spikingtemporalmemory import helper
+from spikingtemporalmemory import default_params
