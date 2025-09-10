@@ -58,9 +58,10 @@ dev = [
     "pytest",
 ]
 
-[build-system]
-build-backend = "flit_core.buildapi"
-requires = ["flit_core >=3.2,<4"]
 
-[tool.flit.module]
-name = "spikingtemporalmemory"
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
