@@ -1,0 +1,66 @@
+[project]
+name = "spikingtemporalmemory"
+description = "PyNEST implementation of the spiking temporal memory model."
+dynamic = ["version"]
+readme = "README.md"
+license = {text = "GPL-3.0-or-later"}
+authors = [
+    { name = "Younes Bouhadjar", email = "y.bouhadjar@fz-juelich.de" },
+    { name = "Melissa Lober", email = "m.lober@fz-juelich.de" },
+    { name = "Tom Tetzlaff", email = "t.tetzlaff@fz-juelich.de" }    
+]
+maintainers = [
+    { name = "Younes Bouhadjar", email = "y.bouhadjar@fz-juelich.de" },
+    { name = "Melissa Lober", email = "m.lober@fz-juelich.de" },
+    { name = "Tom Tetzlaff", email = "t.tetzlaff@fz-juelich.de" }    
+]
+keywords = [
+    "sequence learning",
+    "neuroscience",
+    "computational neuroscience", 
+    "neuromorphic computing",
+    "spiking temporal memory",
+    "NEST simulator",
+    "NESTML",
+    "neural networks",
+]
+
+requires-python = ">=3.10"
+dependencies = [
+    "matplotlib",
+    # "nest-simulator",   ## needs `pip install nest-simulator` to become available    
+    "numpy",
+    "psutil",
+    "wandb",
+    "nestml<=8.0.0,>7.0.2",
+]
+
+[metadata]
+description-file = "README.md"
+
+[project.urls]
+"Homepage" = "https://github.com/YounesBouhadjar/SpikingTemporalMemory"
+"Documentation" = "https://github.com/YounesBouhadjar/SpikingTemporalMemory/blob/main/README.md"
+"Repository" = "https://github.com/YounesBouhadjar/SpikingTemporalMemory"
+"Bug Tracker" = "https://github.com/YounesBouhadjar/SpikingTemporalMemory/issues"
+"Changelog" = "https://github.com/YounesBouhadjar/SpikingTemporalMemory/releases"
+
+
+[project.optional-dependencies]
+test = [
+    "pydocstyle",
+    "pylint",
+    "pytest",
+]
+dev = [
+    "pydocstyle",
+    "pylint",
+    "pytest",
+]
+
+[build-system]
+build-backend = "flit_core.buildapi"
+requires = ["flit_core >=3.2,<4"]
+
+[tool.flit.module]
+name = "spikingtemporalmemory"
