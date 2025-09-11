@@ -54,8 +54,14 @@ We welcome contributions to the documentation and the code. For bug reports, fea
 
 ## License
 
-The material in this repository is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa]. For details, see [here](LICENSES/CC-BY-NC-SA-4.0.txt). 
+The material in this repository is subject to different licenses:
+
+- All material outside the `PyNEST` folder is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa]. For details, see [here](LICENSES/CC-BY-NC-SA-4.0.txt).
   [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
+
+- The material inside the `PyNEST` folder is licensed under the [GNU General Public License v3.0 or later](https://www.gnu.org/licenses/gpl-3.0). For details, see [here](LICENSES/GPL-3.0-or-later.txt).  
+  [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 
 [cc-by-nc-sa]: http://creativecommons.org/licenses/by-nc-sa/4.0/
 [cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png

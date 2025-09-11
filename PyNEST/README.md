@@ -50,8 +50,19 @@ See [this example]() for a more detailed illustration of how the package can be 
 - Python 3.12.3
 - matplotlib, numpy, wandb, nestml
 
+Build and install the custom neuron and synapse models using NESTML:
+
+```bash
+python compile_nestml_models.py
+```
+
 ## References
 
 
 License
 -------
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+This project is licensed under the GNU General Public License v3.0.  
+For details, see [here](https://www.gnu.org/licenses/gpl-3.0).
