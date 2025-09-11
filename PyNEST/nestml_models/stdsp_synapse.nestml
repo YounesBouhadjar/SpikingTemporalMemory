@@ -38,7 +38,7 @@ model stdsp_synapse:
     # z_post pA <- continuous
 
   output:
-    spike
+    spike(w real, d ms)
 
   onReceive(post_spikes):
     #TODO: remove dt_max (redundant with tau_tr_pre)
