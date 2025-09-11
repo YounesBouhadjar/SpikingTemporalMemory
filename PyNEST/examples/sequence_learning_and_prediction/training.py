@@ -152,18 +152,19 @@ def train(PS, arr_id=None):
     S = int(params['task']['S'])                                  # number of sequences
     C = int(params['task']['C'])                                  # sequence length
 
-    #TODO move this to parameters.py
-    start = 100.
-    stop = 5000000.
-    seq_set_instance_size = 1000
-    subset_size           = None
-    order                 = 'fixed'
-    seq_activation_type   = 'consecutive' ## 'consecutive', 'parallel'
-    inter_seq_intv_min    = 100.
-    inter_seq_intv_max    = 105.
+    # simulation parameters from parameter space
+    start = params['start']
+    stop = params['stop']
+    inter_seq_intv_min    = params['DeltaT']
+    inter_seq_intv_max    = params['DeltaT']
+    inter_elem_intv_min = params['DeltaT_seq']
+    inter_elem_intv_max = params['DeltaT_seq']
 
-    inter_elem_intv_min = 50.
-    inter_elem_intv_max = 50.
+    seq_set_instance_size = params['task']['seq_set_instance_size']
+    subset_size = params['task']['subset_size']
+    order = params['task']['order']
+    seq_activation_type = params['task']['seq_activation_type']
+    seed = int(params['task']['seed'])
 
     if R > (S - 1) or O > (C - 2):
 
@@ -178,7 +179,6 @@ def train(PS, arr_id=None):
     minimal_prefix_length = 1   # minimal prefix length
     minimal_postfix_length = 1  # minimal postfix length
     redraw = True               # if redraw == True: pre- and postfixes may contain repeating elements 
-    seed = int(params['task']['seed'])              # RNG seed (int or None)
     alphabet = sg.latin_alphabet                    # function defining type of alphabet (only important for printing)
    
     ####################    
@@ -290,12 +290,12 @@ def train(PS, arr_id=None):
         err_prev = np.inf
         tprev = 0
         counter_abort = 0
-        record_ts = True
-        early_abort = True
-        early_break = True
-        K = 10
-        M_abort = 20
-        min_error = 0.01
+        record_ts = params['record_ts']
+        early_abort = params['early_abort']
+        early_break = params['early_break']
+        K = params['K']
+        M_abort = params['M_abort']
+        min_error = params['min_error']
 
         # assess the performance each Kth episode
         for i in range(S-1, exp_seq_set_instance_size-1, K*S):

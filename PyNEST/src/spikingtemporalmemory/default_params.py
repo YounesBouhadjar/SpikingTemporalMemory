@@ -37,7 +37,7 @@ p = para.ParameterSpace({})
 p['data_path'] = {}
 p['data_path']['data_root_path'] = 'data'
 p['data_path']['project_name'] = 'sequence_learning_performance'
-p['data_path']['parameterspace_label'] = 'sequence_learning_and_prediction_task_complexity_2'
+p['data_path']['parameterspace_label'] = 'sequence_learning_and_prediction'
 
 # parameters for setting up the network  
 p['M'] = 26                  # number of subpopulations. 
@@ -147,6 +147,7 @@ p['syn_dict_ei']['receptor_type'] = 3                    # receptor correspondin
 
 # stimulus parameters
 p['DeltaT'] = 40.                     # inter-stimulus interval
+p['DeltaT_seq'] = 2.5*p['DeltaT']     # inter-sequence interval
 p['excitation_start'] = 30.           # time at which the external stimulation begins
 p['time_dend_to_somatic'] = 20.       # time between the dAP activation and the somatic activation (only used if sparse_first_char is True)   
 p['DeltaT_cue'] = 80.                 # inter-cue interval during replay
@@ -155,8 +156,7 @@ p['DeltaT_cue'] = 80.                 # inter-cue interval during replay
 p['dt'] = 0.1                                  # simulation time resolution (ms)
 p['overwrite_files'] = True                    # if True, data will be overwritten,
                                                # if False, a NESTError is raised if the files already exist
-#p['seed'] = para.ParameterRange([10, 20, 30])           # seed for NEST
-p['seed'] = para.ParameterRange([11, 12, 13])           # seed for NEST
+p['seed'] = 15                                  # seed for NEST
 p['print_simulation_progress'] = False         # print the time progress.
 p['n_threads'] = 16                             # number of threads per MPI process 
 p['pad_time'] = 5.
@@ -182,7 +182,7 @@ p['task']['C'] = 40                                # sequence length
 p['task']['R'] = 0                                 # number of shared subsequences
 p['task']['O'] = 0                                 # length of shared subsequences ("order")
 p['task']['seed'] = 15                             # seed number
-
-# setup the training loop  
-p['learning_episodes'] = 100                  # total number of training episodes ('repetitions of the sequence sets')
-p['episodes_to_testing'] = 100                # number of episodes after which we measure the prediction perfomance
+p['task']['seq_set_instance_size'] = 10         # sequence set instance size
+p['task']['subset_size'] = None                    # subset size for sequences
+p['task']['order'] = 'fixed'                       # sequence order type
+p['task']['seq_activation_type'] = 'consecutive'   # sequence activation type ('consecutive', 'parallel')
