@@ -150,19 +150,12 @@ class Model:
         # create recording devices
         self.__create_recording_devices()
 
-#        # create weight recorder
-#        if self.params['active_weight_recorder']:
-#            self.__create_weight_recorder()
-#
-#        if self.params['add_bkgd_noise']:
-#            self.__create_noise_sources()
-#
+
     def connect(self):
         """Connects network and devices
         """
 
         print('\nConnecting network and devices...')
-        # TODO: take into account L (number of subpopulations per character) when connecting the network
 
         # connect excitatory population (EE)
         if self.params['load_connections']:
@@ -215,11 +208,6 @@ class Model:
             print("save data to %s/%s ..." % (self.data_path, fname))
             np.save('%s/%s' % (self.data_path, fname), data)
 
-        #else:
-            # reset recorders
-        #    self.spike_recorder_soma.n_events = 0
-        #    self.multimeter_idend_last_episode.n_events = 0
-        #    self.multimeter_idend.n_events = 0
 
     def __create_neuronal_populations(self):
         """'Create neuronal populations

@@ -32,7 +32,8 @@ dependencies = [
     "numpy",
     "psutil",
     "wandb",
-    "nestml<=8.0.0,>7.0.2",
+    "nestml>=8.1.0",
+    "parameters_space"
 ]
 
 [metadata]

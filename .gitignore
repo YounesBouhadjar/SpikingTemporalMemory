@@ -44,6 +44,7 @@ spikingtm/
 .Trashes
 ehthumbs.db
 Thumbs.db
+*.gz
 
 # NEST/PyNEST specific
 *.so

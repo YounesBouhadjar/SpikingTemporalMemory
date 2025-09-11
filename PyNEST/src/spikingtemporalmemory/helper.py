@@ -627,7 +627,6 @@ def compute_prediction_performance(somatic_spikes, dendriticAP, dendriticAP_reco
                 elif k in excited_subpopulations and v >= (ratio_fn_activation * params['pattern_size']):
                     output[k] = 1
 
-
             error = 1/params['L'] * np.sqrt(sum((output - target) ** 2))
             false_positive = 1/params['L'] * sum(np.heaviside(output - target, 0))
             false_negative = 1/params['L'] * sum(np.heaviside(target - output, 0))
@@ -700,20 +699,11 @@ def measure_fp_fn(somatic_spikes,
                   mode='train',
                   debug=False):
 
-    xt = []
-    labels = []
-    ls = []
-    spt = []
     shift = 20.
     interval = 14.
 
-    end_iterations = 0
-
     assert len(somatic_spikes[0]) != 0
         
-    times_somatic_spikes = somatic_spikes[:, 1]
-    senders_somatic_spikes = somatic_spikes[:, 0]
-
     times_dendritic_current = dendritic_current[:, 1]
     senders_dendritic_current = dendritic_current[:, 0]
     dendritic_values = dendritic_current[:, 2]
@@ -721,11 +711,6 @@ def measure_fp_fn(somatic_spikes,
     errors = [[] for _ in range(S)]
     false_positives = [[] for _ in range(S)]
     false_negatives = [[] for _ in range(S)]
-    active_dendrites = [[] for _ in range(S)]
-
-    acc_seq = 0
-    ls = []
-    sps = []
 
     errs = 0
     fps = 0
@@ -777,9 +762,9 @@ def measure_fp_fn(somatic_spikes,
             false_negative = sum(false_negative_per_subpop)
 
             # append errors, fp, and fn for the different sequences
-            errors[q].append(error)
-            false_positives[q].append(false_positive)
-            false_negatives[q].append(false_negative)
+            errors[q].append(error.item())
+            false_positives[q].append(false_positive.item())
+            false_negatives[q].append(false_negative.item())
             #active_dendrites[q].append(num_active_dendrites)
 
             errs += error
@@ -787,6 +772,7 @@ def measure_fp_fn(somatic_spikes,
             fns += false_negative
 
         print('#### Prediction performance ####')
+        print('Sequence items:', seq_set_instances[q]['elements'])
         print('Error:', errors[q])
         print('False positives:', false_positives[q])
         print('False negatives:', false_negatives[q])
