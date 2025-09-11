@@ -3,7 +3,7 @@ import sys
 import yaml
 import numpy as np
 
-from shtm import helper 
+from spikingtemporalmemory import helper 
 import parameters_space as pars 
 
 # get commmand line arguments
