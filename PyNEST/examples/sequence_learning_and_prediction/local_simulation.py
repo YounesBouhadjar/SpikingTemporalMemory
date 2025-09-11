@@ -2,7 +2,8 @@ import os
 import sys
 from joblib import Parallel, delayed
 
-from shtm import helper 
+from spikingtemporalmemory import helper 
+import parameters_space as data_pars 
 
 def sim(i):
     os.system("python %s 0 %d 0" % (simulation_script, i))
@@ -13,27 +14,14 @@ try:
 except:
     print("provide simulation script!")
 
-if simulation_script == "training.py":
-
-    import parameters_space as data_pars 
- 
-    # get parameters 
-    PS = data_pars.p
-else:
-    path_dict = {}
-    path_dict['data_root_path'] = "data"
-    path_dict['project_name'] = "sequence_learning_performance"
-    path_dict['parameterspace_label'] = "stimulus_timing_analysis"
-
-    # get parameters 
-    PS, data_path = helper.get_parameter_set(path_dict)
+# get parameters 
+PS = data_pars.p
  
 # parameters list 
 PL = helper.parameter_set_list(PS)
 
 # save parameters.py  
-if simulation_script == "training.py":
-    helper.copy_scripts(PS['data_path'], "parameters_space.py")
+helper.copy_scripts(PS['data_path'], "parameters_space.py")
 
 # simulation 
 N = len(PL)

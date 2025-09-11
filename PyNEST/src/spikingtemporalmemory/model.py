@@ -42,8 +42,11 @@ import numpy as np
 from collections import defaultdict
 from collections import Counter
 
-from shtm import helper
-from fna.decoders.readouts import Readout
+from spikingtemporalmemory import helper
+try:
+    from fna.decoders.readouts import Readout
+except:
+    pass
 
 import sys
 import wandb

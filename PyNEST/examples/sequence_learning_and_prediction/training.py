@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with shtm.  If not, see <https://www.gnu.org/licenses/>.
 #
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 """
 This script instantiates the Spiking-TemporalMemory model, creates, connects, and simulates the network 
@@ -36,8 +37,8 @@ import argparse
 import numpy as np
 from pprint import pformat
 from argparse import ArgumentParser
-sys.path.append('../../')
-from shtm import model, helper
+
+from spikingtemporalmemory import model, helper
 import sequence_generator as sg
 
 
@@ -227,42 +228,6 @@ def train(PS, arr_id=None):
     # convert sequence set instance to element activation times
     element_activations = sg.seq_set_instance_gdf(seq_set_instance)
 
-    if plot_task:
-        import matplotlib.pyplot as plt
-
-        plt.rcParams.update({'font.size': 8})
-        plt.figure(1,dpi=300,figsize=(5,3))
-        plt.clf()
-
-        ylim = (vocabulary[0],vocabulary[-1])
-        sg.plot_seq_instance_intervals(seq_set,seq_ids,
-                                       seq_set_instance,
-                                       ylim,
-                                       alpha=0.1,
-                                       cm='jet')    
-
-        colormap = plt.get_cmap('jet')
-        colors = [colormap(k) for k in np.linspace(0, 1, len(seq_set))]    
-        for cs in range(len(seq_set_instance)):
-            clr = colors[seq_ids[cs]]
-            plt.plot(seq_set_instance[cs]['times'],
-                     seq_set_instance[cs]['elements'],
-                     'o', ms=3, mfc=clr, mew=0.5, 
-                     mec='k', rasterized=True)
-            plt.text(seq_set_instance[cs]['times'][0],vocabulary[-1]+1,r"%d" % seq_ids[cs],
-                     fontsize=5)
-        plt.xlabel(r'time (ms)')
-        plt.ylabel(r'element ID')
-        plt.xlim(0, stop)
-        plt.ylim(vocabulary[0]-0.5,
-                 vocabulary[-1]+2)
-
-        plt.setp(plt.gca(),
-                 yticks = vocabulary)
-        
-        plt.subplots_adjust(left=0.13, right=0.95, bottom=0.15, top=0.95)
-        plt.savefig('sequence_set_instance.pdf')
-
     if params['store_training_data']:
         fname = 'training_data'
         fname_voc = 'vocabulary'
@@ -306,7 +271,6 @@ def train(PS, arr_id=None):
     # set input
     # ===============================================================
     model_instance.set_input(element_activations, seq_set_instance)
-
 
     # ###############################################################
     # simulate the network

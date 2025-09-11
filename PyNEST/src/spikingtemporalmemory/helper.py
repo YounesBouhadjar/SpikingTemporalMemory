@@ -332,10 +332,7 @@ def get_data_path(pars, ps_label='', add_to_path=''):
     try:
         home = pars['home']
     except:
-        #home = '../..'
-        #home = Path.home()
-        username = getpass.getuser()
-        home = f'/work/users/{username}'
+        home = Path.home()
 
     data_path = Path(home, pars['data_root_path'],
                      pars['project_name'],
