@@ -4,7 +4,7 @@ import yaml
 import numpy as np
 
 from spikingtemporalmemory import helper 
-import parameters_space as pars 
+
 
 # get commmand line arguments
 try:

@@ -4,9 +4,10 @@ import yaml
 import wandb
 import numpy as np
 
-from shtm import helper 
+from spikingtemporalmemory import helper 
 
-# get commmand line arguments
+
+#TODO use an argument parser to get command line arguments
 try:
     sweep_id_path = sys.argv[1]
     N = int(sys.argv[2])

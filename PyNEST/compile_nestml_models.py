@@ -1,4 +1,3 @@
-# make the functions available
 from pynestml.frontend.pynestml_frontend import generate_nest_target
 import re
 import nest
