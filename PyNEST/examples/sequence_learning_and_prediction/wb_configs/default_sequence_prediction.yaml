@@ -1,37 +1,28 @@
-project: sequence_learning_and_prediction
-program: training.py
-method: bayes
+project: sequence_learning_and_prediction_2503
+program: training_evaluation.py
+#method: grid #random #bayes
+#method: random #bayes
+method: random
 metric:
-  name: fn
+  name: err
   goal: minimize
 parameters:
-#  zt:
-#    max: 2.
-#    min: 1.
-#  lambda_h:
-#    max: 0.02
-#    min: 0.01
-  w_dep:
-    min: 0.001
-    max: 0.1
-  n_E:
-    min: 150
-    max: 300   
-#    'hidden_state_dim': {
-#        'max':500, 'min':10
-#        },
-#    'memory_content_size': {
-#        'max':500, 'min':10
-#        },
-#    'memory_addresses_size': {
-#        'values': [10, 20, 30]
-#        }
-#early_terminate:
-#    type: hyperband
-#    min_iter: 3
-#    max_iter: 10
-#    s: 2
-#    eta: 3
+  S: # number of sequences 
+    values: [1]
+  C: # sequence length
+    #values: [25, 30, 35, 40]
+    values: [40]
+  R: # number of shared sub sequences
+    values: [0]
+  O: # length of shared sub sequences
+    values: [0]
+  tau_perm:
+    #values: [500., 1000., 5000., 8000., 10000., 50000., 70000., 80000.]
+    values: [0.]
+  lambda:
+    values: [0.01, 0.02, 0.05, 0.08, 0.1, 0.2, 0.25, 0.4, 0.5, 0.6, 0.7, 0.8]
+  lambda_minus:
+    values: [0, 0.01, 0.02, 0.05, 0.08, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 
 command:
   - ${env}
@@ -41,4 +32,6 @@ command:
   - True  
   - "--wbm"
   - online  
+  - "--exp-params"
+  - parameters_space_seq_len.py 
   - ${args}
