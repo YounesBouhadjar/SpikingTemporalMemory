@@ -54,7 +54,6 @@ for batch_id in range(int(np.ceil(1.*N/JOBMAX))):
     file.write('#SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE\n')              # send email notifications
     file.write('#SBATCH --mail-user=%s\n' % email)
     file.write('#SBATCH --mem-per-cpu=2500\n')                                      # and reserve 6GB of memory
-    file.write('source activate spiking-htm\n')                             # activate conda environment
     file.write('srun python %s --exp-params %s --batch-id %d --exp-params-idx $SLURM_ARRAY_TASK_ID --jobmax %d\n' % (simulation_script, params_script, batch_id, JOBMAX) ) # call simulation script
     file.write('scontrol show jobid ${SLURM_JOBID} -dd # Job summary at exit')
     file.close()

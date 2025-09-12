@@ -35,5 +35,5 @@ and make sure to follow the [instructions for installing NEST](../../README.md#s
 
    To run wandb sweep:
    ```bash
-   python submission_cluster_simulation.py wandb-user_name/project_name/sweep_id NUMBER_RUNS parameters_space.py 
+   python submission_cluster_sweep.py wandb-user_name/project_name/sweep_id NUMBER_RUNS parameters_space.py 
    ```

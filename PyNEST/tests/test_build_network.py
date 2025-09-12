@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple test script focused on model functionality from training.py
+Simple test script focused on model functionality
 """
 
 import unittest
