@@ -47,7 +47,8 @@ See [this example]() for a more detailed illustration of how the package can be 
 ## Software requirements
 
 - NEST=>3.8.0 ([NEST installation](https://nest-simulator.readthedocs.io/en/stable/installation))
-- matplotlib, numpy, wandb, nestml, parameters_space
+- NESTML>=8.1.0
+- matplotlib, numpy, wandb, parameters_space
 
 Build and install the custom neuron and synapse models using NESTML:
 
