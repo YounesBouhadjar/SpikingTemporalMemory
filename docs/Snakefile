@@ -8,7 +8,7 @@ rule all:
 rule compile_tex_source:
     input:
         expand("ModelDescription_{MODEL}.tex", MODEL=MODELS),
-     	expand("figures/NetworkSketch_{MODEL}.pdf", MODEL=MODELS)
+        expand("figures/NetworkSketch_{MODEL}.pdf", MODEL=MODELS)
     output:
         expand("ModelDescription_{MODEL}.pdf", MODEL=MODELS)               
     run:
