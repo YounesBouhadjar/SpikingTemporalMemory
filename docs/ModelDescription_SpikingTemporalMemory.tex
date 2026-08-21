@@ -291,6 +291,7 @@ $\Epop=\cup_{i=k}^M\mathcal{M}_k$ & excitatory (E) neurons  & $N_\exc$\\
                 \begin{equation}
                   \label{eq:lif}
                   \tau_{\text{m},i}\dot{V}_i(t)=-V_i(t)+R_{\text{m},i} I_i(t)
+                    \quad \forall{}k,\ \forall t \notin \left(t_{i}^{k},\,t_{i}^{k}+\tau_{\text{ref},i}\right]
                 \end{equation}
                 with membrane resistance $R_{\text{m},i}=\dfrac{\tau_{\text{m},i}}{C_{\text{m},i}}$, membrane time constant $\tau_{\text{m},i}$, and total synaptic input current $I_i(t)$ (see \cref{tab:Model-description-synapse})
               \item excitatory neurons: $\tau_{\text{m},i}=\tau_\text{m,E}$, $C_{\text{m},i}=C_\text{m}$, $\theta_i=\theta_\text{E}$, $\tau_{\text{ref},i}=\tau_\text{ref,E}$ ($\forall i\in\Epop$)
@@ -409,22 +410,16 @@ $\Epop=\cup_{i=k}^M\mathcal{M}_k$ & excitatory (E) neurons  & $N_\exc$\\
         \item dynamics of synaptic permanence $P_{ij}(t)$ (maturity) in EE connections during learning:
           \begin{equation}
             \label{eq:plasticity}
-          % \begin{aligned}
-          %   &\forall J_\text{min}<J_{ij}<J_\text{max}: \\[1ex]
-          %   & \quad J_\text{max}^{-1}\frac{dJ_{ij}}{dt} = \lambda_{+} \sum_{\{t_i^*\}^\prime} x_j(t) \delta(t-[t_i^*+d_\EE]) I(t_i^*,\Delta{}t_\text{min},\Delta{}t_\text{max}) \\
-          %   & - \lambda_{-} y_i \sum_{\{t_j^*\}} \delta(t-t_j^*) \\
-          %   & + \lambda_\text{h}  \sum_{\{t_i^*\}^\prime} \bigl( z^* - z_i(t) \bigr) \delta(t-t_i^*)I(t_i^*,\Delta{}t_\text{min},\Delta{}t_\text{max}).\\
-          %   & \forall{}\{t|J_{ij}(t)<J_\text{min}\}: \quad J_{ij}(t)=J_\text{min}\\
-          %   &\forall{}\{t|J_{ij}(t)>J_\text{max}\}: \quad J_{ij}(t)=J_\text{max}
-          % \end{aligned}  
-          \begin{aligned}
-            \forall P_\text{min}<P_{ij}<P_\text{max}&: \\[1ex]
-            \frac{dP_{ij}}{dt} &= P_\text{max} \, \lambda_{+} \sum_{\{t_i^*\}^\prime} \delta(t-[t_i^*+d_\EE]) I_{+}(x_j(t), t_i^*,\Delta{}t_\text{min},\Delta{}t_\text{max}) \\
-            &\quad - P_\text{max} \, \lambda_{-} \sum_{\{t_j^*\}^\prime} \delta(t-[t_j^*+d_\EE]) I_{-}(x_i(t),t_j^*,\Delta{}t_\text{max}) \\
-            &\quad + (P_\text{min}-P) \frac{1}{\tau_\text{P}}\\
-            & \forall{}\{t|P_{ij}(t)<P_\text{min}\}: \quad P_{ij}(t)=P_\text{min}\\
-            &\forall{}\{t|P_{ij}(t)>P_\text{max}\}: \quad P_{ij}(t)=P_\text{max}
-          \end{aligned}  
+            \begin{aligned}
+              &\forall \{t|P_{\text{min},ij}<P_{ij}(t)<P_\text{max}\}: \\[1ex]
+              &\begin{aligned}
+                \quad \frac{dP_{ij}}{dt} = &P_\text{max} \, \lambda_{+} \sum_{\{t_i^*\}^\prime} \delta(t-[t_i^*+d_\EE]) I_{+}(x_j(t), t_i^*,\Delta{}t_\text{min},\Delta{}t_\text{max}) \\
+                - &P_\text{max} \, \lambda_{-} \sum_{\{t_j^*\}^\prime} \delta(t-[t_j^*+d_\EE]) I_{-}(x_i(t),t_j^*,\Delta{}t_\text{max}) \\
+                + &(P_{\text{min},ij}-P_{ij} \frac{1}{\tau_\text{P}}
+              \end{aligned} \\[1ex]
+              &\forall \{t|P_{ij}(t)<P_{\text{min},ij}\}: \quad P_{ij}(t)=P_{\text{min},ij}\\
+              &\forall \{t|P_{ij}(t)>P_\text{max}\}: \quad P_{ij}(t)=P_\text{max}
+            \end{aligned}
         \end{equation}
         with
         \begin{itemize}
@@ -452,7 +447,7 @@ $\Epop=\cup_{i=k}^M\mathcal{M}_k$ & excitatory (E) neurons  & $N_\exc$\\
               \end{cases}
             \end{aligned}
           \end{equation}
-        \item maximum permanence $P_\text{max}$, minimum permanence $P_\text{max}$, potentiation and depression rates $\lambda_\text{+}$, $\lambda_\text{-}$, decay time constant $\tau_\text{P}$, delay $d_\EE$, minimum $\Delta{}t_\text{min}$ and maximum $\Delta{}t_\text{max}$ time lags between pairs of pre- and postsynaptic spikes at which synapses are potentiated or depressed, nearest presynaptic spike time $t_j^{+}$ preceding $t_i^*$, nearest postsynaptic spike time $t_i^{-}$ preceding $t_j^*$,
+        \item maximum permanence $P_\text{max}$, minimum permanence $P_{\text{min},ij}$, potentiation and depression rates $\lambda_\text{+}$, $\lambda_\text{-}$, decay time constant $\tau_\text{P}$, delay $d_\EE$, minimum $\Delta{}t_\text{min}$ and maximum $\Delta{}t_\text{max}$ time lags between pairs of pre- and postsynaptic spikes at which synapses are potentiated or depressed, nearest presynaptic spike time $t_j^{+}$ preceding $t_i^*$, nearest postsynaptic spike time $t_i^{-}$ preceding $t_j^*$,
         \item spike trace of presynaptic neuron $j$, evolving according to
         \begin{equation*}
           \frac{dx_j}{dt}=-\tau_{+}^{-1} x_j(t) + \sum_{t_j^*}\delta(t-t_j^*)
@@ -543,6 +538,7 @@ $\Epop=\cup_{i=k}^M\mathcal{M}_k$ & excitatory (E) neurons  & $N_\exc$\\
     \item inhibitory currents: $I_{\text{EI},i}(0)=0$ ($\forall{}i\in\mathcal{E}$)
     \item excitatory currents: $I_{\text{IE},i}(0)=0$ ($\forall{}i\in\mathcal{I}$)
     \item synaptic permanences: $P_{ij}(0)\sim\mathcal{U}(P_{0,\text{min}},P_{0,\text{max}})$ (uniform distribution; $\forall{}i,j\in\mathcal{E}$)
+    \item minimum permanence: $P_{\text{min},ij} = P_{ij}(0)$
     \item synaptic weights: $\J_{ij}(0)=0$ ($\forall{}i,j\in\mathcal{E}$)
     \item spike traces: $x_i(0)=0$ ($\forall{}i\in\mathcal{E}$)
     \item connectivity and initial weights are randomly and independently drawn for each network realization
@@ -697,19 +693,15 @@ $\lambda_{+}$ & $0.6$  & potentiation rate \\
 \hline
 $\lambda_{-}$ & $\{0.1, 0.8\}$ & depression rate \\
 \hline
-$P_{ij}$ & $[P_\text{min},P_0]$  & synaptic permanence \\
-\hline
-$P_{\theta}$ & 20 & synapse maturity threshold
+$P_{\theta}$ & 10 & synapse maturity threshold
 % when the permanence reaches this value the plastic weight ($\JEE$) becomes W
                             \\
 \hline
 $P_\text{max}$ & 20 & permanence upper bound\\
 \hline
-$P_\text{min}$ & 1 & permanence lower bound  \\
-\hline
 $P_{0,\mathrm{max}}$ & 8 & permanence initialization upper bound \\
 \hline
-$P_{0,\mathrm{min}}$ & 0 & permanence initialization upper bound \\
+$P_{0,\mathrm{min}}$ & 0 & permanence initialization lower bound \\
 \hline         
 $J_\text{max}$ & $12.98\pA$ & maximum weight\\
 \hline
